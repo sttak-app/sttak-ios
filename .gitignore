@@ -1,62 +1,73 @@
-# Xcode
-#
-# gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
+# macOS
 
-## User settings
+.DS_Store
+
+# Xcode user data
+
 xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
 
-## Obj-C/Swift specific
-*.hmap
+# Xcode build files
 
-## App packaging
-*.ipa
-*.dSYM.zip
-*.dSYM
+DerivedData/
+build/
+Build/
+*.build/
 
-## Playgrounds
-timeline.xctimeline
-playground.xcworkspace
+# Xcode workspace user data
+
+*.xcworkspace/xcuserdata/
+
+# Xcode project user data
+
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
 
 # Swift Package Manager
-#
-# Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
-# Packages/
-# Package.pins
-# Package.resolved
-# *.xcodeproj
-#
-# Xcode automatically generates this directory with a .xcworkspacedata file and xcuserdata
-# hence it is not needed unless you have added a package configuration file to your project
-# .swiftpm
 
+.swiftpm/
 .build/
 
 # CocoaPods
-#
-# We recommend against adding the Pods directory to your .gitignore. However
-# you should judge for yourself, the pros and cons are mentioned at:
-# https://guides.cocoapods.org/using/using-cocoapods.html#should-i-check-the-pods-directory-into-source-control
-#
-# Pods/
-#
-# Add this line if you want to avoid checking in source code from the Xcode workspace
-# *.xcworkspace
+
+Pods/
 
 # Carthage
-#
-# Add this line if you want to avoid checking in source code from Carthage dependencies.
-# Carthage/Checkouts
 
 Carthage/Build/
 
-# fastlane
-#
-# It is recommended to not store the screenshots in the git repo.
-# Instead, use fastlane to re-generate the screenshots whenever they are needed.
-# For more information about the recommended setup visit:
-# https://docs.fastlane.tools/best-practices/source-control/#source-control
+# Fastlane
 
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
-fastlane/test_output
+fastlane/test_output/
+
+# App packages
+
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Environment variables
+
+.env
+.env.*
+!.env.example
+
+# Secrets
+
+*.p8
+*.cer
+*.mobileprovision
+*.provisionprofile
+
+# Logs
+
+*.log
+
+# Temporary files
+
+tmp/
+temp/
