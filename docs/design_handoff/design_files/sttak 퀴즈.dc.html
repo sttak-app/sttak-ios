@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  div, span, p, h1, h2, h3 { word-break: keep-all; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  @keyframes scToast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @keyframes scRise { from { transform: translateY(10px); } to { transform: none; } }
+  @keyframes scPop { 0% { transform: scale(0.92); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
+  @keyframes scPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+</style>
+</helmet>
+
+<div style="width: max-content; min-width: 100%; min-height: 100vh; box-sizing: border-box; padding: 52px; background: #ECE9E2; font-family: 'Pretendard', -apple-system, sans-serif; color: #26241F; display:flex; justify-content:center;">
+
+  <div style="position:relative; width: 417px; height: 876px; background:#0C0C0D; border-radius: 56px; padding: 12px; box-shadow: 0 24px 60px rgba(40,36,28,0.22), inset 0 0 0 2px #2b2b2e;">
+    <div style="position:relative; width: 393px; height: 852px; border-radius: 45px; overflow:hidden; background:#F7F4EE;">
+
+      <!-- status bar -->
+      <div style="position:absolute; top:0; left:0; right:0; height:54px; display:flex; align-items:center; justify-content:space-between; padding: 0 30px 0 32px; z-index:40;">
+        <div style="font-size:16px; font-weight:700; color:#26241F; font-family:'Space Grotesk',sans-serif; letter-spacing:0.02em;">9:41</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <div style="display:flex; align-items:flex-end; gap:2px; height:11px;">
+            <div style="width:3px; height:5px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:7px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:9px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:11px; background:#26241F; border-radius:1px;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:2px;">
+            <div style="width:23px; height:12px; border:1.5px solid #26241F; border-radius:3.5px; padding:1.5px;"><div style="width:100%; height:100%; background:#26241F; border-radius:1.5px;"></div></div>
+            <div style="width:1.5px; height:4px; background:#26241F; border-radius:0 1px 1px 0;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute; top:13px; left:50%; transform:translateX(-50%); width:124px; height:35px; background:#000; border-radius:20px; z-index:45;"></div>
+      <div style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:#26241F; opacity:0.82; z-index:45;"></div>
+
+      <div style="position:absolute; inset:0; display:flex; flex-direction:column; z-index:5;">
+
+        <!-- header -->
+        <div style="padding:62px 22px 6px; display:flex; align-items:center;">
+          <div style="font-size:24px; font-weight:700; letter-spacing:-0.02em;">퀴즈</div>
+          <div style="flex:1;"></div>
+          <div style="display:flex; align-items:center; gap:6px; background:#EFEBE2; padding:6px 11px 6px 9px; border-radius:999px; white-space:nowrap;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A8478" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+            <div style="font-size:12.5px; font-weight:700; color:#6E6A5E; font-family:'Space Grotesk',sans-serif; white-space:nowrap;">{{ nextStr }}</div>
+          </div>
+        </div>
+
+        <!-- scroll body -->
+        <div style="flex:1; overflow-y:auto; padding:8px 18px 150px;">
+
+          <!-- capital banner -->
+          <div style="background:#26241F; border-radius:20px; padding:16px 18px; position:relative; overflow:hidden;">
+            <div style="display:flex; align-items:center;">
+              <div style="flex:1;">
+                <div style="font-size:11.5px; color:#9A968B; font-weight:600;">내 모의투자 자본금</div>
+                <div style="display:flex; align-items:baseline; gap:5px; margin-top:5px;">
+                  <div style="font-size:25px; font-weight:700; color:#fff; font-family:'Space Grotesk',sans-serif; letter-spacing:-0.01em;">{{ capitalStr }}</div>
+                  <div style="font-size:13px; color:#C9C4B8; font-weight:600;">원</div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="display:inline-flex; align-items:center; gap:5px; background:rgba(15,163,154,0.18); padding:5px 10px; border-radius:999px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#37C9BD"><path d="M12 2l8 4.5v9L12 22l-8-6.5v-9z"></path></svg>
+                  <div style="font-size:12px; font-weight:700; color:#37C9BD; font-family:'Space Grotesk',sans-serif;">정답 1문제 +50만</div>
+                </div>
+                <div style="font-size:10.5px; color:#7E7A6F; margin-top:6px;">맞힌 만큼 투자 자본금으로 쌓여요</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PLAYING -->
+          <sc-if value="{{ playing }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; align-items:center; gap:9px; padding:22px 2px 14px;">
+              <div style="font-size:13px; font-weight:700; color:#46443D;">오늘의 3문제</div>
+              <div style="font-size:12px; font-weight:600; color:#A39D8E; font-family:'Space Grotesk',sans-serif;">{{ qNumStr }}</div>
+              <div style="flex:1;"></div>
+              <div style="display:flex; gap:6px;">
+                <sc-for list="{{ dots }}" as="d" hint-placeholder-count="3">
+                  <div style="width:8px; height:8px; border-radius:50%; background:{{ d.color }};"></div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF; border-radius:20px; padding:20px 19px; box-shadow:0 1px 3px rgba(40,36,28,0.06); animation: scRise 0.3s ease;">
+              <div style="display:inline-flex; align-items:center; gap:6px; background:{{ q.catTint }}; padding:4px 11px; border-radius:999px;">
+                <div style="width:6px; height:6px; border-radius:50%; background:{{ q.catColor }};"></div>
+                <div style="font-size:11.5px; font-weight:700; color:{{ q.catColor }}; white-space:nowrap;">{{ q.cat }}</div>
+              </div>
+              <div style="font-size:18.5px; font-weight:700; line-height:1.5; margin-top:14px; letter-spacing:-0.01em; text-wrap:pretty;">{{ q.text }}</div>
+
+              <div style="display:flex; flex-direction:column; gap:9px; margin-top:18px;">
+                <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="4">
+                  <div onClick="{{ o.onSelect }}" style="display:flex; align-items:center; gap:12px; padding:14px 14px; border-radius:14px; border:{{ o.border }}; background:{{ o.bg }}; cursor:pointer; transition:background .15s, border-color .15s;">
+                    <div style="flex:none; width:25px; height:25px; border-radius:50%; border:{{ o.keyBorder }}; background:{{ o.keyBg }}; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; color:{{ o.keyColor }}; font-family:'Space Grotesk',sans-serif;">{{ o.key }}</div>
+                    <div style="flex:1; font-size:14.5px; font-weight:{{ o.weight }}; color:{{ o.textColor }}; line-height:1.45;">{{ o.label }}</div>
+                    <sc-if value="{{ o.showMark }}" hint-placeholder-val="{{ false }}">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ o.markColor }}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><polyline points="{{ o.markPath }}"></polyline></svg>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <sc-if value="{{ revealed }}" hint-placeholder-val="{{ false }}">
+              <div style="background:{{ exTint }}; border-radius:16px; padding:15px 16px; margin-top:13px; animation: scRise 0.3s ease;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                  <div style="font-size:11px; font-weight:800; color:#fff; background:{{ exColor }}; padding:3px 9px; border-radius:7px;">{{ exLabel }}</div>
+                  <sc-if value="{{ wasCorrect }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:13px; font-weight:700; color:#1F8A57; font-family:'Space Grotesk',sans-serif;">+500,000원 자본금</div>
+                  </sc-if>
+                </div>
+                <div style="font-size:13.5px; color:#46443D; line-height:1.65;">{{ q.expl }}</div>
+              </div>
+            </sc-if>
+
+            <div onClick="{{ primaryAction }}" style="margin-top:16px; height:54px; border-radius:16px; background:{{ btnBg }}; display:flex; align-items:center; justify-content:center; font-size:15.5px; font-weight:700; color:{{ btnColor }}; cursor:{{ btnCursor }}; box-shadow:{{ btnShadow }};">{{ btnLabel }}</div>
+          </sc-if>
+
+          <!-- DONE -->
+          <sc-if value="{{ done }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; align-items:center; padding:30px 0 6px; animation: scPop 0.4s ease;">
+              <div style="width:66px; height:66px; border-radius:50%; background:{{ resTint }}; display:flex; align-items:center; justify-content:center;">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="{{ resColor }}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div style="font-size:21px; font-weight:700; margin-top:16px; letter-spacing:-0.01em;">{{ resTitle }}</div>
+              <div style="font-size:14px; color:#8A8478; margin-top:6px;">3문제 중 {{ correctStr }}문제를 맞혔어요</div>
+            </div>
+
+            <div style="background:#26241F; border-radius:20px; padding:20px; margin-top:18px; text-align:center;">
+              <div style="font-size:12px; color:#9A968B; font-weight:600;">이번에 쌓은 모의투자 자본금</div>
+              <div style="display:flex; align-items:baseline; gap:5px; justify-content:center; margin-top:8px;">
+                <div style="font-size:30px; font-weight:700; color:#37C9BD; font-family:'Space Grotesk',sans-serif;">+{{ earnedStr }}</div>
+                <div style="font-size:15px; color:#C9C4B8; font-weight:600;">원</div>
+              </div>
+              <div style="height:1px; background:rgba(255,255,255,0.09); margin:16px 0;"></div>
+              <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                <div style="font-size:12.5px; color:#9A968B;">총 자본금</div>
+                <div style="font-size:16px; font-weight:700; color:#E7E3DA; font-family:'Space Grotesk',sans-serif;">{{ capitalStr }}원</div>
+              </div>
+            </div>
+
+            <div style="background:#FFFFFF; border-radius:16px; padding:6px 16px; margin-top:14px; box-shadow:0 1px 3px rgba(40,36,28,0.06);">
+              <sc-for list="{{ recap }}" as="r" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; gap:11px; padding:12px 0; border-bottom:{{ r.border }};">
+                  <div style="flex:none; width:22px; height:22px; border-radius:50%; background:{{ r.tint }}; display:flex; align-items:center; justify-content:center;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ r.color }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="{{ r.path }}"></polyline></svg>
+                  </div>
+                  <div style="flex:1; font-size:13px; color:#46443D; line-height:1.45;">{{ r.text }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div onClick="{{ goInvest }}" style="margin-top:16px; height:54px; border-radius:16px; background:#0FA39A; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15.5px; font-weight:700; color:#fff; cursor:pointer; box-shadow:0 6px 18px rgba(15,163,154,0.3);">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 15l5-5 4 3 6-7"></path></svg>
+              쌓은 자본금으로 투자 연습하기
+            </div>
+            <div onClick="{{ goRank }}" style="margin-top:10px; height:50px; border-radius:16px; background:#FFFFFF; display:flex; align-items:center; justify-content:center; gap:8px; font-size:14.5px; font-weight:700; color:#46443D; cursor:pointer; box-shadow:0 1px 3px rgba(40,36,28,0.06);">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6E6A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21V9M16 21V5M3 21h18"></path></svg>
+              내 랭킹 확인하기
+            </div>
+            <div style="text-align:center; font-size:12px; color:#A39D8E; margin-top:16px;">다음 3문제까지 {{ nextLong }}</div>
+          </sc-if>
+
+          <!-- COOLDOWN -->
+          <sc-if value="{{ cooldown }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; align-items:center; padding:34px 0 4px;">
+              <div style="width:64px; height:64px; border-radius:50%; background:#EFEBE2; display:flex; align-items:center; justify-content:center;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8A8478" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              </div>
+              <div style="font-size:19px; font-weight:700; margin-top:16px; letter-spacing:-0.01em; white-space:nowrap;">오늘 분량을 모두 풀었어요</div>
+              <div style="font-size:13.5px; color:#8A8478; margin-top:6px; text-align:center; line-height:1.6;">퀴즈는 6시간마다 새로운 3문제가 열려요.<br>잠시 뒤 다시 도전해 보세요.</div>
+            </div>
+            <div style="background:#FFFFFF; border-radius:20px; padding:22px; margin-top:20px; box-shadow:0 1px 3px rgba(40,36,28,0.06); text-align:center;">
+              <div style="font-size:12px; color:#A39D8E; font-weight:600;">다음 세트까지</div>
+              <div style="font-size:38px; font-weight:700; color:#26241F; font-family:'Space Grotesk',sans-serif; letter-spacing:0.01em; margin-top:6px;">{{ nextLong }}</div>
+              <div style="height:6px; border-radius:999px; background:#EFEBE2; margin-top:18px; overflow:hidden;">
+                <div style="height:100%; width:{{ cdProgW }}; background:#0FA39A; border-radius:999px;"></div>
+              </div>
+              <div style="font-size:11.5px; color:#B8B2A4; margin-top:10px;">지난 세트 {{ lastScoreStr }} 정답 · 자본금 +{{ lastEarnedStr }}원</div>
+            </div>
+            <div onClick="{{ goInvest }}" style="margin-top:16px; height:54px; border-radius:16px; background:#0FA39A; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15.5px; font-weight:700; color:#fff; cursor:pointer; box-shadow:0 6px 18px rgba(15,163,154,0.3);">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 15l5-5 4 3 6-7"></path></svg>
+              투자 연습하러 가기
+            </div>
+            <div onClick="{{ goRank }}" style="margin-top:10px; height:50px; border-radius:16px; background:#FFFFFF; display:flex; align-items:center; justify-content:center; gap:8px; font-size:14.5px; font-weight:700; color:#46443D; cursor:pointer; box-shadow:0 1px 3px rgba(40,36,28,0.06);">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6E6A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21V9M16 21V5M3 21h18"></path></svg>
+              내 랭킹 확인하기
+            </div>
+          </sc-if>
+
+        </div>
+
+        <!-- tab bar -->
+        <div style="position:absolute; bottom:0; left:0; right:0; height:86px; background:rgba(247,244,238,0.94); backdrop-filter:blur(12px); border-top:1px solid #ECE7DD; display:flex; padding:9px 12px 0; z-index:30;">
+          <div onClick="{{ navHome }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; padding-top:5px;">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#A39D8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"></path><path d="M5 9.5V20h14V9.5"></path></svg>
+            <div style="font-size:10.5px; font-weight:600; color:#A39D8E;">홈</div>
+          </div>
+          <div onClick="{{ navChart }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; padding-top:5px;">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#A39D8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 15l5-5 4 3 6-7"></path></svg>
+            <div style="font-size:10.5px; font-weight:600; color:#A39D8E;">차트학습</div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; padding-top:5px;">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#0FA39A" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.2 9a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5M12 17h.01"></path></svg>
+            <div style="font-size:10.5px; font-weight:700; color:#0FA39A;">퀴즈</div>
+          </div>
+          <div onClick="{{ navMy }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; padding-top:5px;">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#A39D8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg>
+            <div style="font-size:10.5px; font-weight:600; color:#A39D8E;">마이</div>
+          </div>
+        </div>
+
+        <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; bottom:110px; left:50%; transform:translateX(-50%); background:#26241F; color:#fff; padding:11px 18px; border-radius:999px; font-size:13.5px; font-weight:600; z-index:60; animation: scToast 0.25s ease; white-space:nowrap;">{{ toast }}</div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:960}}">
+class Component extends DCLogic {
+  state = { phase: 'loading', qIdx: 0, selected: null, revealed: false, answers: [], now: Date.now(), toast: '' };
+
+  QUIZ = [
+    { cat: '차트 · 지표', catColor: '#E0A33A', catTint: '#FAF1DD',
+      text: '골든크로스(golden cross)가 나타났다는 것은 보통 무엇을 뜻할까요?',
+      opts: ['단기 이동평균선이 장기선을 아래에서 위로 뚫고 올라간 상태', '거래량이 갑자기 0으로 줄어든 상태', '외국인이 전량 매도하는 구간', '배당락일이 지났다는 신호'],
+      answer: 0,
+      expl: '단기 이동평균선이 장기 이동평균선을 위로 돌파하는 것을 골든크로스라고 해요. 상승 추세 전환의 신호로 읽히지만, 항상 상승을 보장하지는 않아요.' },
+    { cat: '가치 평가', catColor: '#3A6DE8', catTint: '#E8EEFC',
+      text: 'PER(주가수익비율)이 같은 업종 평균보다 낮다면 일반적으로 어떻게 해석할 수 있을까요?',
+      opts: ['이익 대비 주가가 저평가됐을 가능성이 있다', '회사가 곧 상장폐지된다는 뜻', '배당을 한 푼도 주지 않는다는 뜻', '거래가 정지됐다는 뜻'],
+      answer: 0,
+      expl: 'PER은 주가를 주당순이익으로 나눈 값이에요. 업종 평균보다 낮으면 이익 대비 저평가일 수 있지만, 업종·성장성과 함께 봐야 의미가 있어요.' },
+    { cat: '투자 원칙', catColor: '#0FA39A', catTint: '#E1F2F0',
+      text: '여러 종목·자산에 나눠 투자하는 "분산투자"의 가장 큰 목적은 무엇일까요?',
+      opts: ['한 곳에 쏠린 위험을 여러 자산으로 나눠 낮추기 위해', '수익을 무조건 두 배로 만들기 위해', '세금을 면제받기 위해', '거래 수수료를 없애기 위해'],
+      answer: 0,
+      expl: '"달걀을 한 바구니에 담지 말라"는 말처럼, 분산투자는 한 종목이 흔들려도 전체 손실을 줄여 변동성과 위험을 낮추는 것이 핵심이에요.' }
+  ];
+
+  REWARD = 500000;
+  COOLDOWN = 6 * 3600 * 1000;
+
+  componentDidMount() {
+    const last = parseInt(localStorage.getItem('sttak_quiz_last') || '0', 10) || 0;
+    const fresh = !last || (Date.now() - last) >= this.COOLDOWN;
+    this.setState({ phase: fresh ? 'playing' : 'cooldown', now: Date.now() });
+    this._t = setInterval(() => this.setState({ now: Date.now() }), 1000);
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  capital() { try { const p = JSON.parse(localStorage.getItem('sttak_port') || 'null'); return p && p.cash != null ? p.cash : 10000000; } catch (e) { return 10000000; } }
+  earnedSoFar() { return this.state.answers.filter(Boolean).length * this.REWARD; }
+
+  select(i) { if (this.state.revealed) return; this.setState({ selected: i }); }
+
+  submit() {
+    if (this.state.selected == null) return;
+    const correct = this.state.selected === this.QUIZ[this.state.qIdx].answer;
+    this.setState(s => ({ revealed: true, answers: [...s.answers, correct] }));
+  }
+
+  next() {
+    const s = this.state;
+    if (s.qIdx < this.QUIZ.length - 1) {
+      this.setState({ qIdx: s.qIdx + 1, selected: null, revealed: false });
+    } else {
+      this.finish();
+    }
+  }
+
+  finish() {
+    const earned = this.state.answers.filter(Boolean).length * this.REWARD;
+    try {
+      const p = JSON.parse(localStorage.getItem('sttak_port') || 'null') || { cash: 10000000, hold: 0, avg: 0 };
+      p.cash = (p.cash != null ? p.cash : 10000000) + earned;
+      localStorage.setItem('sttak_port', JSON.stringify(p));
+    } catch (e) {}
+    try {
+      const pts = parseInt(localStorage.getItem('sttak_points') || '1240', 10) || 1240;
+      localStorage.setItem('sttak_points', String(pts + this.state.answers.filter(Boolean).length * 50));
+    } catch (e) {}
+    localStorage.setItem('sttak_quiz_last', String(Date.now()));
+    localStorage.setItem('sttak_quiz_lastscore', String(this.state.answers.filter(Boolean).length));
+    localStorage.setItem('sttak_quiz_lastearned', String(earned));
+    this.setState({ phase: 'done' });
+  }
+
+  flash(m) { this.setState({ toast: m }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 2000); }
+  nav(file) { window.location.href = encodeURI(file); }
+
+  fmtHMS(ms) {
+    if (ms < 0) ms = 0;
+    const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    const p = n => String(n).padStart(2, '0');
+    return p(h) + ':' + p(m) + ':' + p(sec);
+  }
+
+  renderVals() {
+    const fmt = n => Math.round(n).toLocaleString('ko-KR');
+    const phase = this.state.phase;
+    const last = parseInt(localStorage.getItem('sttak_quiz_last') || '0', 10) || 0;
+    const remain = last ? (last + this.COOLDOWN - this.state.now) : 0;
+    const nextStr = phase === 'playing' ? '진행 중' : this.fmtHMS(remain);
+    const nextLong = this.fmtHMS(remain);
+    const cdProgW = Math.min(100, Math.max(0, Math.round((1 - remain / this.COOLDOWN) * 100))) + '%';
+
+    const capitalLive = this.capital() + (phase === 'playing' ? this.earnedSoFar() : 0);
+
+    // current question VM
+    const qi = this.QUIZ[this.state.qIdx] || this.QUIZ[0];
+    const sel = this.state.selected, rev = this.state.revealed, ans = qi.answer;
+    const keys = ['A', 'B', 'C', 'D'];
+    const opts = qi.opts.map((label, i) => {
+      let bg = '#FFFFFF', border = '1px solid #ECE7DD', keyBg = '#F2EFE8', keyBorder = '1px solid #E6E0D4', keyColor = '#8A8478', textColor = '#26241F', weight = 600;
+      let showMark = false, markColor = '#1F8A57', markPath = '20 6 9 17 4 12';
+      if (!rev) {
+        if (sel === i) { bg = '#E7F3F0'; border = '2px solid #0FA39A'; keyBg = '#0FA39A'; keyBorder = '2px solid #0FA39A'; keyColor = '#fff'; textColor = '#0E5F58'; weight = 700; }
+      } else {
+        if (i === ans) { bg = '#E8F5EC'; border = '2px solid #2E9E5B'; keyBg = '#2E9E5B'; keyBorder = '2px solid #2E9E5B'; keyColor = '#fff'; textColor = '#1B6E40'; weight = 700; showMark = true; markColor = '#1F8A57'; markPath = '20 6 9 17 4 12'; }
+        else if (i === sel) { bg = '#FCEDEB'; border = '2px solid #DC5B52'; keyBg = '#DC5B52'; keyBorder = '2px solid #DC5B52'; keyColor = '#fff'; textColor = '#A23B34'; weight = 700; showMark = true; markColor = '#C5483F'; markPath = '18 6 6 18'; }
+        else { bg = '#FFFFFF'; border = '1px solid #F0ECE3'; textColor = '#B5AF9F'; keyColor = '#C4BDAE'; }
+      }
+      return { label, key: keys[i], bg, border, keyBg, keyBorder, keyColor, textColor, weight, showMark, markColor, markPath, onSelect: () => this.select(i) };
+    });
+
+    const dots = this.QUIZ.map((_, i) => ({ color: i < this.state.qIdx ? '#0FA39A' : (i === this.state.qIdx ? '#26241F' : '#DDD7CB') }));
+
+    const wasCorrect = rev && sel === ans;
+    const btnReady = sel != null;
+    let btnLabel = '정답 확인', btnBg = '#0FA39A', btnColor = '#fff', btnCursor = 'pointer', btnShadow = '0 6px 18px rgba(15,163,154,0.3)', primaryAction = () => this.submit();
+    if (!rev && !btnReady) { btnLabel = '보기를 선택해 주세요'; btnBg = '#E8E3D9'; btnColor = '#A8A293'; btnCursor = 'default'; btnShadow = 'none'; primaryAction = () => {}; }
+    else if (rev) { btnLabel = this.state.qIdx < this.QUIZ.length - 1 ? '다음 문제' : '결과 보기'; primaryAction = () => this.next(); btnBg = '#26241F'; btnShadow = 'none'; }
+
+    // done
+    const correct = this.state.answers.filter(Boolean).length;
+    const earned = correct * this.REWARD;
+    const resTitle = correct === 3 ? '완벽해요!' : (correct >= 2 ? '잘했어요' : (correct >= 1 ? '한 걸음 나아갔어요' : '다음엔 더 잘할 거예요'));
+    const resColor = correct >= 2 ? '#2E9E5B' : '#C99A4B';
+    const resTint = correct >= 2 ? '#E8F5EC' : '#FAF1DD';
+    const recap = this.QUIZ.map((q, i) => { const ok = this.state.answers[i]; return { text: q.cat + ' · ' + (ok ? '정답' : '오답'), tint: ok ? '#E8F5EC' : '#FCEDEB', color: ok ? '#2E9E5B' : '#DC5B52', path: ok ? '20 6 9 17 4 12' : '18 6 6 18', border: i < this.QUIZ.length - 1 ? '1px solid #F4F0E8' : 'none' }; });
+
+    // cooldown recap
+    const lastScore = parseInt(localStorage.getItem('sttak_quiz_lastscore') || '0', 10) || 0;
+    const lastEarned = parseInt(localStorage.getItem('sttak_quiz_lastearned') || '0', 10) || 0;
+
+    return {
+      nextStr, nextLong, cdProgW,
+      capitalStr: fmt(capitalLive),
+      playing: phase === 'playing', done: phase === 'done', cooldown: phase === 'cooldown',
+      q: { cat: qi.cat, catColor: qi.catColor, catTint: qi.catTint, text: qi.text, expl: qi.expl, opts },
+      qNumStr: (this.state.qIdx + 1) + ' / ' + this.QUIZ.length, dots,
+      revealed: rev, wasCorrect,
+      exLabel: wasCorrect ? '정답' : '해설', exColor: wasCorrect ? '#2E9E5B' : '#8A8478', exTint: wasCorrect ? '#EFF8F1' : '#F4F1EA',
+      btnLabel, btnBg, btnColor, btnCursor, btnShadow, primaryAction,
+      resTitle, resColor, resTint, correctStr: String(correct), earnedStr: fmt(earned), recap,
+      lastScoreStr: lastScore + ' / 3', lastEarnedStr: fmt(lastEarned),
+      goInvest: () => this.nav('sttak 차트학습.dc.html'), goRank: () => this.nav('sttak 랭킹.dc.html'),
+      navHome: () => this.nav('sttak Home.dc.html'), navChart: () => this.nav('sttak 차트학습.dc.html'), navMy: () => this.nav('sttak 마이.dc.html'),
+      toast: this.state.toast, hasToast: !!this.state.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

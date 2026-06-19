@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  div, span, p, h1, h2, h3 { word-break: keep-all; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  @keyframes scFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes scSpin { to { transform: rotate(360deg); } }
+  @keyframes scToast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @keyframes scSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes scDim { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</helmet>
+
+<div style="width: max-content; min-width: 100%; min-height: 100vh; box-sizing: border-box; padding: 52px; background: #ECE9E2; font-family: 'Pretendard', -apple-system, sans-serif; color: #26241F; display:flex; justify-content:center;">
+
+  <div style="position:relative; width: 417px; height: 876px; background:#0C0C0D; border-radius: 56px; padding: 12px; box-shadow: 0 24px 60px rgba(40,36,28,0.22), inset 0 0 0 2px #2b2b2e;">
+    <div style="position:relative; width: 393px; height: 852px; border-radius: 45px; overflow:hidden; background:#F7F4EE;">
+
+      <!-- status bar -->
+      <div style="position:absolute; top:0; left:0; right:0; height:54px; display:flex; align-items:center; justify-content:space-between; padding: 0 30px 0 32px; z-index:70;">
+        <div style="font-size:16px; font-weight:700; color:#26241F; font-family:'Space Grotesk',sans-serif; letter-spacing:0.02em;">9:41</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <div style="display:flex; align-items:flex-end; gap:2px; height:11px;">
+            <div style="width:3px; height:5px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:7px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:9px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:11px; background:#26241F; border-radius:1px;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:2px;">
+            <div style="width:23px; height:12px; border:1.5px solid #26241F; border-radius:3.5px; padding:1.5px;"><div style="width:100%; height:100%; background:#26241F; border-radius:1.5px;"></div></div>
+            <div style="width:1.5px; height:4px; background:#26241F; border-radius:0 1px 1px 0;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute; top:13px; left:50%; transform:translateX(-50%); width:124px; height:35px; background:#000; border-radius:20px; z-index:70;"></div>
+      <div style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:#26241F; opacity:0.82; z-index:70;"></div>
+
+      <!-- ============ HOME ============ -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div style="position:absolute; inset:0; display:flex; flex-direction:column; z-index:5;">
+
+          <!-- app bar -->
+          <div style="padding: 60px 22px 0; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:9px;">
+              <div style="position: relative; width: 26px; height: 26px;">
+                <div style="position:absolute; top:0; left:0; width:9px; height:9px; border-top:2.5px solid #0FA39A; border-left:2.5px solid #0FA39A; border-top-left-radius:3px;"></div>
+                <div style="position:absolute; top:0; right:0; width:9px; height:9px; border-top:2.5px solid #0FA39A; border-right:2.5px solid #0FA39A; border-top-right-radius:3px;"></div>
+                <div style="position:absolute; bottom:0; left:0; width:9px; height:9px; border-bottom:2.5px solid #0FA39A; border-left:2.5px solid #0FA39A; border-bottom-left-radius:3px;"></div>
+                <div style="position:absolute; bottom:0; right:0; width:9px; height:9px; border-bottom:2.5px solid #0FA39A; border-right:2.5px solid #0FA39A; border-bottom-right-radius:3px;"></div>
+                <div style="position:absolute; top:50%; left:50%; width:6px; height:6px; transform:translate(-50%,-50%); border-radius:50%; background:#0FA39A;"></div>
+              </div>
+              <div style="font-size:21px; font-weight:700; letter-spacing:-0.03em;">sttak</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="display:flex; align-items:center; gap:6px; background:#FFFFFF; border-radius:999px; padding:6px 12px; box-shadow:0 1px 2px rgba(40,36,28,0.05);">
+                <div style="width:7px; height:7px; border-radius:50%; background:#0FA39A;"></div>
+                <span style="font-size:12.5px; font-weight:700; color:#46443D; white-space:nowrap;">연속 <span style="font-family:'Space Grotesk',sans-serif;">7</span>일</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; background:#FFFFFF; border-radius:999px; padding:6px 12px; box-shadow:0 1px 2px rgba(40,36,28,0.05);">
+                <span style="font-size:12px; font-weight:600; color:#8A8478; white-space:nowrap;">보유 자산</span>
+                <span style="font-size:13px; font-weight:700; color:#0E7E77; white-space:nowrap;">1,000만원</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- scroll region -->
+          <div style="flex:1; overflow-y:auto; overflow-x:hidden; padding: 8px 0 100px;">
+            <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <!-- greeting -->
+              <div style="padding:14px 22px 0;">
+                <div style="font-size:13px; font-weight:600; color:#A39D8E; margin-bottom:5px;">{{ greeting.date }} · 오늘의 브리핑</div>
+                <div style="font-size:22px; font-weight:700; letter-spacing:-0.022em; line-height:1.34;">{{ greeting.mood }}</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin:13px 0 8px;">
+                  <div style="font-size:12.5px; font-weight:600; color:#A39D8E;">오늘 새 소식 {{ greeting.total }}건</div>
+                  <div onClick="{{ refresh }}" style="display:flex; align-items:center; gap:5px; cursor:pointer; color:#A39D8E;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="animation: {{ refreshAnim }};"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><polyline points="21 3 21 9 15 9"></polyline></svg>
+                    <span style="font-size:12.5px; font-weight:600;">새로고침</span>
+                  </div>
+                </div>
+                <div style="display:flex; gap:2px; height:7px; border-radius:999px; overflow:hidden; background:#EDE9E0;">
+                  <div style="width:{{ gMood.hoPct }}; background:#E14B43;"></div>
+                  <div style="width:{{ gMood.juPct }}; background:#D8D2C6;"></div>
+                  <div style="width:{{ gMood.akPct }}; background:#3A6DE8;"></div>
+                </div>
+              </div>
+
+              <!-- stock mood strip -->
+              <div style="display:flex; gap:9px; overflow-x:auto; padding:18px 16px 4px;">
+                <sc-for list="{{ strip }}" as="s" hint-placeholder-count="3">
+                  <div onClick="{{ s.onSelect }}" style="flex:none; display:flex; align-items:center; gap:8px; padding:10px 15px; border-radius:14px; background:{{ s.bg }}; box-shadow:{{ s.sh }}; cursor:pointer;">
+                    <div style="width:8px; height:8px; border-radius:50%; background:{{ s.dotColor }};"></div>
+                    <div style="white-space:nowrap;">
+                      <span style="font-size:14px; font-weight:700; color:{{ s.nameColor }};">{{ s.name }}</span>
+                      <span style="font-size:12.5px; font-weight:600; font-family:'Space Grotesk',sans-serif; color:{{ s.chgColor }}; margin-left:7px;">{{ s.chgStr }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <!-- focus stock daily card (swipeable) -->
+              <div onPointerDown="{{ onDown }}" onPointerMove="{{ onMove }}" onPointerUp="{{ onUp }}" onPointerCancel="{{ onUp }}" style="touch-action:pan-y; padding:10px 16px 0;">
+                <div style="background:#FFFFFF; border-radius:22px; padding:20px; box-shadow:0 1px 3px rgba(40,36,28,0.06); transform:translateX({{ dragPx }}); opacity:{{ cardOpacity }}; transition:{{ cardTransition }};">
+                  <!-- header (compact, price as 보조정보) -->
+                  <div style="display:flex; align-items:center; gap:9px; margin-bottom:16px;">
+                    <div style="font-size:19px; font-weight:700; letter-spacing:-0.02em;">{{ focus.name }}</div>
+                    <div style="font-size:11px; font-weight:600; color:#8A8478; background:#F0EEE8; padding:2px 8px; border-radius:999px;">{{ focus.sector }}</div>
+                    <div style="flex:1;"></div>
+                    <div style="display:flex; align-items:baseline; gap:6px;">
+                      <span style="font-size:14px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:#46443D;">{{ focus.priceStr }}</span>
+                      <span style="font-size:13px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:{{ focus.chgColor }};">{{ focus.chgStr }}</span>
+                    </div>
+                  </div>
+
+                  <!-- main: notable news with easy explanation -->
+                  <div style="font-size:13px; font-weight:700; color:#26241F; margin-bottom:12px; letter-spacing:-0.01em;">오늘 주목할 소식</div>
+                  <sc-for list="{{ focus.primary }}" as="n" hint-placeholder-count="2">
+                    <div data-si="{{ n.si }}" data-ni="{{ n.ni }}" onClick="{{ onNewsClick }}" style="cursor:pointer; padding-bottom:13px; margin-bottom:13px; border-bottom:1px solid #F1ECE3;">
+                      <div style="display:flex; align-items:center; gap:7px; margin-bottom:7px;">
+                        <div style="font-size:11px; font-weight:700; color:{{ n.sentColor }}; background:{{ n.sentBg }}; padding:2px 8px; border-radius:6px;">{{ n.sent }}</div>
+                        <div style="font-size:11.5px; color:#B6B0A2;">{{ n.time }} · {{ n.source }}</div>
+                      </div>
+                      <div style="font-size:15px; font-weight:700; line-height:1.38; letter-spacing:-0.01em; margin-bottom:8px;">{{ n.title }}</div>
+                      <div style="display:flex; gap:8px; align-items:flex-start; background:#EEF4F2; border-radius:11px; padding:9px 12px;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="#0FA39A" style="flex:none; margin-top:2px;"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg>
+                        <div style="font-size:13px; font-weight:500; color:#1F4D49; line-height:1.5;">{{ n.easy }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+
+                  <sc-if value="{{ focus.hasRest }}" hint-placeholder-val="{{ false }}">
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:#A39D8E; margin-bottom:4px;">그 외 소식 {{ focus.restCount }}건</div>
+                      <sc-for list="{{ focus.rest }}" as="r" hint-placeholder-count="2">
+                        <div data-si="{{ r.si }}" data-ni="{{ r.ni }}" onClick="{{ onNewsClick }}" style="display:flex; align-items:center; gap:11px; padding:13px 0; cursor:pointer; border-bottom:1px solid #F5F1E9;">
+                          <div style="flex:none; width:7px; height:7px; border-radius:50%; background:{{ r.dotColor }};"></div>
+                          <div style="flex:1; min-width:0; font-size:14.5px; font-weight:600; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.title }}</div>
+                          <div style="flex:none; font-size:11.5px; color:#B6B0A2;">{{ r.time }}</div>
+                          <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#CFC9BC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><polyline points="1 1 7 7 1 13"></polyline></svg>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+
+              <!-- dots -->
+              <div style="display:flex; justify-content:center; gap:7px; padding:18px 0 4px;">
+                <sc-for list="{{ dots }}" as="d" hint-placeholder-count="3">
+                  <div style="width:{{ d.w }}; height:7px; border-radius:999px; background:{{ d.bg }};"></div>
+                </sc-for>
+              </div>
+            </div>
+            </sc-if>
+
+            <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+              <div style="height:420px; display:flex; align-items:center; justify-content:center; color:#C0BAAD; font-size:13px;">소식을 불러오는 중…</div>
+            </sc-if>
+          </div>
+
+          <!-- AI float button -->
+          <div onClick="{{ openAI }}" style="position:absolute; right:18px; bottom:104px; z-index:30; display:flex; align-items:center; gap:7px; background:rgba(38,36,31,0.92); backdrop-filter:blur(4px); border-radius:999px; padding:11px 15px 11px 13px; box-shadow:0 6px 18px rgba(40,36,28,0.22); cursor:pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#7FE3D8"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg>
+            <span style="font-size:13.5px; font-weight:700; color:#FFFFFF;">AI에게 묻기</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ OTHER TABS PLACEHOLDER ============ -->
+      <sc-if value="{{ isPlaceholder }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; padding:54px 0 86px; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; background:#F7F4EE; animation: scFade .35s ease;">
+          <div style="width:64px; height:64px; border-radius:20px; background:#EDE9E0; display:flex; align-items:center; justify-content:center; color:#B6B0A2;">
+            <div style="color:{{ phIconColor }};">{{ phIconHtml }}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:19px; font-weight:700; margin-bottom:6px;">{{ phLabel }}</div>
+            <div style="font-size:13.5px; color:#A39D8E; line-height:1.5;">곧 만나요. 이번 단계에선<br>홈 화면을 먼저 준비했어요.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ============ BOTTOM TAB BAR ============ -->
+      <div style="position:absolute; bottom:0; left:0; right:0; height:86px; background:rgba(247,244,238,0.92); backdrop-filter:blur(12px); border-top:1px solid #EAE5DB; display:flex; padding:8px 8px 22px; z-index:35;">
+        <div onClick="{{ goHome }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:{{ tc.home }};">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V20h14V9.5"></path></svg>
+          <span style="font-size:11px; font-weight:600;">홈</span>
+        </div>
+        <div onClick="{{ goChart }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:{{ tc.chart }};">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16h16"></path><polyline points="7 14 11 10 14 13 19 7"></polyline></svg>
+          <span style="font-size:11px; font-weight:600;">차트학습</span>
+        </div>
+        <div onClick="{{ goQuiz }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:{{ tc.quiz }};">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.6 2.6 0 1 1 3.7 2.4c-.8.4-1.1.9-1.1 1.7"></path><circle cx="12" cy="16.6" r="0.6" fill="currentColor" stroke="none"></circle></svg>
+          <span style="font-size:11px; font-weight:600;">퀴즈</span>
+        </div>
+        <div onClick="{{ goMy }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:{{ tc.my }};">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"></path></svg>
+          <span style="font-size:11px; font-weight:600;">마이</span>
+        </div>
+      </div>
+
+      <!-- ============ NEWS DETAIL SHEET ============ -->
+      <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeSheet }}" style="position:absolute; inset:0; background:rgba(20,18,14,0.42); z-index:50; animation: scDim .25s ease;"></div>
+        <div style="position:absolute; left:0; right:0; bottom:0; height:724px; background:#FFFFFF; border-radius:28px 28px 0 0; z-index:55; display:flex; flex-direction:column; overflow:hidden; animation: scSheetUp .32s cubic-bezier(.2,.7,.2,1); box-shadow:0 -10px 40px rgba(40,36,28,0.18);">
+          <div style="display:flex; justify-content:center; padding:10px 0 4px;"><div style="width:38px; height:5px; border-radius:3px; background:#E2DCCF;"></div></div>
+
+          <!-- header + tabs -->
+          <div style="padding:8px 22px 0;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="font-size:11.5px; font-weight:700; color:{{ sd.sentColor }}; background:{{ sd.sentBg }}; padding:3px 10px; border-radius:7px;">{{ sd.sent }}</div>
+                <div style="font-size:13.5px; font-weight:600; color:#6E6A5E;">{{ sd.stockName }}</div>
+                <div style="font-size:12px; color:#B6B0A2;">· {{ sd.time }}</div>
+              </div>
+              <div onClick="{{ closeSheet }}" style="width:32px; height:32px; border-radius:50%; background:#F2EFE8; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#8A8478;">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"></path></svg>
+              </div>
+            </div>
+            <div style="font-size:20px; font-weight:700; line-height:1.36; letter-spacing:-0.02em; margin-bottom:16px;">{{ sd.title }}</div>
+            <div style="display:flex; background:#F2EFE8; border-radius:13px; padding:4px; gap:3px;">
+              <div onClick="{{ setEasy }}" style="flex:1; text-align:center; padding:9px 0; border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer; background:{{ dtE.bg }}; color:{{ dtE.color }}; box-shadow:{{ dtE.sh }};">쉬운 풀이</div>
+              <div onClick="{{ setOrigin }}" style="flex:1; text-align:center; padding:9px 0; border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer; background:{{ dtO.bg }}; color:{{ dtO.color }}; box-shadow:{{ dtO.sh }};">원문</div>
+              <div onClick="{{ setAI }}" style="flex:1; text-align:center; padding:9px 0; border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer; background:{{ dtA.bg }}; color:{{ dtA.color }}; box-shadow:{{ dtA.sh }};">AI에게 묻기</div>
+            </div>
+          </div>
+
+          <!-- TAB: 쉬운 풀이 (무슨 뜻 → 왜 중요 → 용어) -->
+          <sc-if value="{{ isEasy }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1; overflow-y:auto; padding:18px 22px 26px;">
+              <div style="font-size:12px; font-weight:700; color:#A39D8E; margin-bottom:10px; letter-spacing:0.02em;">이 소식, 무슨 뜻인가요?</div>
+              <div style="background:#EEF4F2; border-radius:16px; padding:15px 16px; display:flex; gap:11px; margin-bottom:14px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#0FA39A" style="flex:none; margin-top:2px;"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg>
+                <div style="font-size:15.5px; font-weight:600; color:#1F4D49; line-height:1.5;">{{ sd.oneLine }}</div>
+              </div>
+              <div style="font-size:14.5px; color:#3E3C36; line-height:1.68; margin-bottom:28px;">{{ sd.summary }}</div>
+
+              <div style="font-size:12px; font-weight:700; color:#A39D8E; margin-bottom:11px; letter-spacing:0.02em;">왜 중요한가요?</div>
+              <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+                <sc-for list="{{ sd.why }}" as="w" hint-placeholder-count="2">
+                  <div style="display:flex; gap:9px; align-items:flex-start;">
+                    <div style="flex:none; width:5px; height:5px; border-radius:50%; background:#0FA39A; margin-top:8px;"></div>
+                    <div style="font-size:14.5px; color:#3E3C36; line-height:1.55;">{{ w.t }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="background:#F7F4EE; border-radius:14px; padding:13px 15px; margin-bottom:28px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
+                  <div style="width:8px; height:8px; border-radius:50%; background:{{ sd.sentColor }};"></div>
+                  <div style="font-size:13.5px; font-weight:700; color:#26241F;">{{ sd.sentSoft }}</div>
+                </div>
+                <div style="font-size:13.5px; color:#6E6A5E; line-height:1.55;">{{ sd.reason }}</div>
+              </div>
+
+              <div style="font-size:12px; font-weight:700; color:#A39D8E; margin-bottom:10px; letter-spacing:0.02em;">알아두면 좋은 용어</div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ sd.terms }}" as="t" hint-placeholder-count="3">
+                  <div onClick="{{ t.onToggle }}" style="background:#F7F4EE; border-radius:14px; padding:13px 15px; cursor:pointer;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div style="display:flex; align-items:center; gap:9px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0FA39A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M12 4v16"></path></svg>
+                        <span style="font-size:14.5px; font-weight:600;">{{ t.term }}</span>
+                      </div>
+                      <span style="font-size:18px; font-weight:600; color:#B6B0A2;">{{ t.sign }}</span>
+                    </div>
+                    <sc-if value="{{ t.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:13.5px; color:#6E6A5E; line-height:1.55; margin-top:9px;">{{ t.def }}</div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- TAB: 원문 -->
+          <sc-if value="{{ isOrigin }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1; display:flex; flex-direction:column; min-height:0;">
+              <div style="flex:1; overflow-y:auto; padding:18px 22px 14px;">
+                <div style="display:flex; align-items:center; gap:11px; margin-bottom:20px;">
+                  <div style="width:40px; height:40px; border-radius:12px; background:#F2EFE8; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#8A8478;">{{ sd.sourceInitial }}</div>
+                  <div style="flex:1;">
+                    <div style="font-size:14.5px; font-weight:700;">{{ sd.source }}</div>
+                    <div style="font-size:12px; color:#A39D8E;">{{ sd.time }} 게시</div>
+                  </div>
+                </div>
+                <div style="font-size:12px; font-weight:700; color:#A39D8E; margin-bottom:10px; letter-spacing:0.02em;">원문 미리보기</div>
+                <div style="font-size:14.5px; color:#2E2C26; line-height:1.72; margin-bottom:14px;">{{ sd.lead }}</div>
+                <div style="position:relative; border-radius:14px; overflow:hidden; margin-bottom:16px;">
+                  <div style="filter:blur(5px); opacity:0.5; font-size:13.5px; line-height:1.85; color:#6E6A5E; user-select:none;">증권가는 이번 분기 영업이익이 시장 기대치를 소폭 웃돌 것으로 전망하고 있으며, 메모리 업황 회복 속도와 파운드리 수주 흐름이 핵심 변수로 꼽힌다. 관계자는 추가적인 가격 협상이 이어지고 있다고 전했다.</div>
+                  <div style="position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px; background:linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.85));"><span style="font-size:12.5px; font-weight:600; color:#8A8478;">전체 내용은 원문에서 확인하세요</span></div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:flex-start; padding:12px 14px; background:#F7F4EE; border-radius:12px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A39D8E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-top:1px;"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><circle cx="12" cy="16" r="0.6" fill="#A39D8E" stroke="none"></circle></svg>
+                  <div style="font-size:12.5px; color:#8A8478; line-height:1.55;">쉬운 풀이는 이해를 돕기 위해 정리한 내용이에요. 투자 판단 전 원문도 함께 확인해 주세요.</div>
+                </div>
+              </div>
+              <div style="padding:12px 22px 26px; border-top:1px solid #F2EEE6;">
+                <div onClick="{{ externalLink }}" style="height:52px; border-radius:14px; background:#0FA39A; color:#fff; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; font-weight:700; cursor:pointer;">
+                  {{ sd.source }} 원문 보기
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h5v5"></path><path d="M19 5l-9 9"></path><path d="M19 14v5H5V5h5"></path></svg>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- TAB: AI에게 묻기 -->
+          <sc-if value="{{ isAI }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1; display:flex; flex-direction:column; min-height:0;">
+              <div data-chat-scroll="1" style="flex:1; overflow-y:auto; padding:18px 18px 8px; display:flex; flex-direction:column; gap:11px;">
+                <sc-for list="{{ chatMsgs }}" as="m" hint-placeholder-count="1">
+                  <div style="display:flex; justify-content:{{ m.align }};">
+                    <div style="max-width:82%; background:{{ m.bubbleBg }}; color:{{ m.bubbleColor }}; padding:12px 15px; border-radius:16px; font-size:13.5px; line-height:1.58; font-weight:500; white-space:pre-wrap;">{{ m.text }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:10px 16px 22px; border-top:1px solid #F2EEE6;">
+                <div style="font-size:11.5px; font-weight:600; color:#A39D8E; margin-bottom:9px;">이런 점이 궁금하다면</div>
+                <div style="display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px;">
+                  <sc-for list="{{ quick }}" as="q" hint-placeholder-count="3">
+                    <div onClick="{{ q.onAsk }}" style="font-size:13px; font-weight:600; color:#0E7E77; background:#EEF4F2; border-radius:999px; padding:8px 13px; cursor:pointer;">{{ q.q }}</div>
+                  </sc-for>
+                </div>
+                <div style="display:flex; align-items:center; gap:9px; background:#F2EFE8; border-radius:14px; padding:6px 6px 6px 15px;">
+                  <input type="text" value="{{ chatInput }}" onChange="{{ onChatInput }}" placeholder="궁금한 점을 입력해 보세요" style="flex:1; border:none; background:transparent; outline:none; font-size:14px; font-family:'Pretendard',sans-serif; color:#26241F; height:38px;" />
+                  <div onClick="{{ sendFree }}" style="flex:none; width:38px; height:38px; border-radius:11px; background:#0FA39A; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+        </div>
+      </sc-if>
+
+      <!-- toast -->
+      <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; bottom:118px; left:50%; transform:translateX(-50%); background:#26241F; color:#fff; padding:11px 18px; border-radius:999px; font-size:13.5px; font-weight:600; z-index:50; animation: scToast 0.25s ease; white-space:nowrap;">{{ toast }}</div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:960}}">
+class Component extends DCLogic {
+  state = {
+    tab: 'home', stockIndex: 0, filter: 'all', dragX: 0, dragging: false, noTrans: false,
+    refreshing: false, toast: '',
+    sheetOpen: false, si: 0, ni: 0, detailTab: 'easy', easyMode: true, openTerm: -1,
+    chat: [], chatInput: '', chatTyping: false
+  };
+
+  componentDidMount() {
+    import('./sttak-data.js')
+      .then(m => { this._d = { STOCKS: m.STOCKS, QUICK: m.QUICK, FREE: m.FREE_ANSWER }; this.forceUpdate(); })
+      .catch(e => { console.error('data load failed', e); });
+  }
+  componentWillUnmount() { clearInterval(this._ci); clearTimeout(this._st); clearTimeout(this._rt); clearTimeout(this._tt); }
+  componentDidUpdate(prevProps, prevState) { if (prevState && this.state.chat.length !== prevState.chat.length) { const el = document.querySelector('[data-chat-scroll]'); if (el) el.scrollTop = el.scrollHeight; } }
+
+  fmt(n) { return n.toLocaleString('ko-KR'); }
+  chgStr(c) { return (c >= 0 ? '+' : '') + c.toFixed(2) + '%'; }
+  chgColor(c) { return c >= 0 ? '#E14B43' : '#3A6DE8'; }
+  sentStyle(s) {
+    if (s === '호재') return { bg: '#FBECEA', color: '#D23F33' };
+    if (s === '악재') return { bg: '#EAF0FB', color: '#3A6DE8' };
+    return { bg: '#F0EEE8', color: '#8A8478' };
+  }
+  buildSpark(arr) {
+    const w = 84, h = 36, min = Math.min(...arr), max = Math.max(...arr), rng = (max - min) || 1;
+    return arr.map((v, i) => {
+      const x = (i / (arr.length - 1)) * w;
+      const y = h - 3 - ((v - min) / rng) * (h - 6);
+      return x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+  }
+
+  flash(msg) { this.setState({ toast: msg }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 1800); }
+
+  refresh() {
+    if (this.state.refreshing) return;
+    this.setState({ refreshing: true });
+    clearTimeout(this._rt);
+    this._rt = setTimeout(() => { this.setState({ refreshing: false }); this.flash('최신 소식을 불러왔어요'); }, 750);
+  }
+
+  // ---- swipe ----
+  onDown(e) { this._sx = e.clientX; this._sy = e.clientY; this._axis = null; this.setState({ dragging: true, dragX: 0, noTrans: false }); }
+  onMove(e) {
+    if (!this.state.dragging) return;
+    const dx = e.clientX - this._sx, dy = e.clientY - this._sy;
+    if (this._axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) this._axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    if (this._axis === 'x') this.setState({ dragX: dx });
+  }
+  onUp() {
+    if (!this.state.dragging) return;
+    const dx = this.state.dragX;
+    if (this._axis === 'x' && dx <= -70) return this.commit(1);
+    if (this._axis === 'x' && dx >= 70) return this.commit(-1);
+    this.setState({ dragging: false, dragX: 0 });
+  }
+  commit(dir) {
+    const n = this._d ? this._d.STOCKS.length : 1;
+    const out = dir === 1 ? -380 : 380;
+    this.setState({ dragging: false, dragX: out });
+    clearTimeout(this._st);
+    this._st = setTimeout(() => {
+      const idx = (this.state.stockIndex + dir + n) % n;
+      this.setState({ stockIndex: idx, dragX: dir === 1 ? 380 : -380, noTrans: true });
+      requestAnimationFrame(() => this.setState({ dragX: 0, noTrans: false }));
+    }, 230);
+  }
+
+  // ---- tabs ----
+  setTab(t) { this.setState({ tab: t }); }
+  setFilter(f) { this.setState({ filter: f }); }
+  parseMins(t) { const m = String(t).match(/(\d+)\s*(시간|분)/); if (!m) return 999; return m[2] === '시간' ? parseInt(m[1], 10) * 60 : parseInt(m[1], 10); }
+
+  // ---- sheet / chat (logic ready; markup added next) ----
+  openNews(si, ni) { this.setState({ sheetOpen: true, si, ni, detailTab: 'easy', easyMode: true, openTerm: -1, chat: [], chatInput: '' }); }
+  openAI() { const si = typeof this.state.stockIndex === 'number' ? this.state.stockIndex : 0; this.setState({ sheetOpen: true, si, ni: 0, detailTab: 'ai', openTerm: -1, chatInput: '' }, () => this.seedChat()); }
+  closeSheet() { clearInterval(this._ci); this.setState({ sheetOpen: false, chatTyping: false }); }
+  setDetailTab(t) { this.setState({ detailTab: t }, () => { if (t === 'ai') this.seedChat(); }); }
+  toggleEasy(v) { this.setState({ easyMode: v }); }
+  toggleTerm(i) { this.setState(s => ({ openTerm: s.openTerm === i ? -1 : i })); }
+
+  seedChat() {
+    if (this.state.chat.length) return;
+    const st = this._d.STOCKS[this.state.si];
+    this.setState({ chat: [{ role: 'ai', text: `'${st.name}' 관련 이 뉴스에 대해 궁금한 걸 물어보세요. 근거를 차트·공시에서 찾아 쉽게 설명해 드릴게요.` }] });
+  }
+  pushUserThenStream(q, answer) {
+    this.setState(s => ({ chat: [...s.chat, { role: 'user', text: q }, { role: 'ai', text: '' }], chatTyping: true }));
+    let i = 0; clearInterval(this._ci);
+    this._ci = setInterval(() => {
+      i += 2;
+      const shown = answer.slice(0, i);
+      this.setState(s => { const c = s.chat.slice(); c[c.length - 1] = { role: 'ai', text: shown }; return { chat: c }; });
+      if (i >= answer.length) { clearInterval(this._ci); this.setState({ chatTyping: false }); }
+    }, 26);
+  }
+  askQuick(q) {
+    if (this.state.chatTyping) return;
+    const item = this._d.QUICK.find(x => x.q === q);
+    this.pushUserThenStream(q, item ? item.a : this._d.FREE);
+  }
+  sendFree() {
+    const t = this.state.chatInput.trim();
+    if (!t || this.state.chatTyping) return;
+    this.setState({ chatInput: '' });
+    this.pushUserThenStream(t, this._d.FREE);
+  }
+
+  renderVals() {
+    const S = this.state, D = this._d;
+    const ready = !!D;
+    const isHome = S.tab === 'home';
+
+    const tcOn = '#0FA39A', tcOff = '#B6B0A2';
+    const tc = { home: isHome ? tcOn : tcOff, chart: S.tab === 'chart' ? tcOn : tcOff, quiz: S.tab === 'quiz' ? tcOn : tcOff, my: S.tab === 'my' ? tcOn : tcOff };
+
+    const phMap = { chart: '차트학습', quiz: '퀴즈', my: '마이페이지' };
+
+    // ---- home: per-stock daily digest ----
+    let greeting = null, gMood = null, strip = [], focus = null, dots = [];
+    if (ready) {
+      const idx = typeof S.stockIndex === 'number' ? S.stockIndex : 0;
+      // global mood (slim greeting)
+      const tg = { 호재: 0, 중립: 0, 악재: 0 }; let totalAll = 0;
+      D.STOCKS.forEach(s => s.news.forEach(n => { tg[n.sent]++; totalAll++; }));
+      const gp = k => totalAll ? Math.round(tg[k] / totalAll * 100) + '%' : '0%';
+      greeting = {
+        date: '6월 18일', total: totalAll,
+        mood: tg['호재'] > tg['악재'] ? '오늘 관심종목은 대체로 긍정적이에요' : tg['악재'] > tg['호재'] ? '오늘은 조심해서 볼 소식이 있어요' : '긍정과 주의가 섞여 있는 하루예요'
+      };
+      gMood = { hoPct: gp('호재'), juPct: gp('중립'), akPct: gp('악재') };
+      // per-stock strip (mood dot + change)
+      const dom = c => (c['호재'] > c['악재'] ? '호재' : c['악재'] > c['호재'] ? '악재' : '중립');
+      strip = D.STOCKS.map((s, i) => {
+        const c = { 호재: 0, 중립: 0, 악재: 0 }; s.news.forEach(n => c[n.sent]++);
+        const ss = this.sentStyle(dom(c));
+        const on = i === idx;
+        return { name: s.name, chgStr: this.chgStr(s.chg), chgColor: on ? 'rgba(255,255,255,0.92)' : this.chgColor(s.chg), dotColor: ss.color, bg: on ? '#26241F' : '#FFFFFF', sh: on ? 'none' : '0 1px 3px rgba(40,36,28,0.06)', nameColor: on ? '#FFFFFF' : '#26241F', onSelect: () => this.setState({ stockIndex: i }) };
+      });
+      // focus stock digest (importance-ranked)
+      const raw = D.STOCKS[idx];
+      const counts = { 호재: 0, 중립: 0, 악재: 0 }; raw.news.forEach(n => counts[n.sent]++);
+      const wgt = s => s === '중립' ? 0 : 1;
+      const ranked = raw.news.map((nw, ni) => ({ nw, ni, mins: this.parseMins(nw.time) })).sort((a, b) => (wgt(b.nw.sent) - wgt(a.nw.sent)) || (a.mins - b.mins));
+      const verdict = counts['호재'] > counts['악재'] ? '오늘은 호재가 우세해요' : counts['악재'] > counts['호재'] ? '오늘은 주의가 필요한 소식이 있어요' : '호재와 악재가 고루 섞여 있어요';
+      const primary = ranked.slice(0, 2);
+      focus = {
+        name: raw.name, sector: raw.sector, priceStr: this.fmt(raw.price), chgStr: this.chgStr(raw.chg), chgColor: this.chgColor(raw.chg),
+        cHo: counts['호재'], cJung: counts['중립'], cAk: counts['악재'], newsCount: raw.news.length,
+        verdict, primaryCount: primary.length, hasRest: ranked.length > 2, restCount: ranked.length - 2,
+        primary: primary.map(r => { const ss = this.sentStyle(r.nw.sent); return { si: idx, ni: r.ni, sent: r.nw.sent, sentBg: ss.bg, sentColor: ss.color, title: r.nw.title, easy: r.nw.easy, time: r.nw.time, source: r.nw.source }; }),
+        rest: ranked.slice(2).map(r => { const ss = this.sentStyle(r.nw.sent); return { si: idx, ni: r.ni, dotColor: ss.color, title: r.nw.title, time: r.nw.time }; })
+      };
+      dots = D.STOCKS.map((_, i) => ({ w: i === idx ? '20px' : '7px', bg: i === idx ? '#0FA39A' : '#D8D2C6' }));
+    }
+
+    // ---- sheet ----
+    let sheetOpen = S.sheetOpen, sd = null, chatMsgs = [], quick = [];
+    if (ready && sheetOpen) {
+      const st = D.STOCKS[S.si]; const nw = st.news[S.ni]; const ss = this.sentStyle(nw.sent);
+      sd = {
+        sent: nw.sent, sentBg: ss.bg, sentColor: ss.color, stockName: st.name, title: nw.title,
+        oneLine: nw.easy,
+        summary: nw.summary,
+        sourceInitial: nw.source.slice(0, 2),
+        sentSoft: nw.sent === '호재' ? '호재에 가까운 소식이에요' : nw.sent === '악재' ? '주의해서 볼 소식이에요' : '지금은 중립적인 소식이에요',
+        why: nw.why.map(t => ({ t })),
+        reason: nw.reason,
+        terms: nw.terms.map((tm, i) => ({ term: tm.term, def: tm.def, open: S.openTerm === i, sign: S.openTerm === i ? '−' : '+', onToggle: () => this.toggleTerm(i) })),
+        lead: nw.lead, source: nw.source, time: nw.time
+      };
+      chatMsgs = S.chat.map(m => ({
+        text: m.text, align: m.role === 'user' ? 'flex-end' : 'flex-start',
+        bubbleBg: m.role === 'user' ? '#0FA39A' : '#F2EFE8', bubbleColor: m.role === 'user' ? '#FFFFFF' : '#2E2C26'
+      }));
+      quick = D.QUICK.map(x => ({ q: x.q, onAsk: () => this.askQuick(x.q) }));
+    }
+    const seg = (on) => on ? { bg: '#FFFFFF', color: '#26241F', sh: '0 1px 3px rgba(40,36,28,0.12)' } : { bg: 'transparent', color: '#9A9485', sh: 'none' };
+    const dtE = seg(S.detailTab === 'easy'), dtO = seg(S.detailTab === 'origin'), dtA = seg(S.detailTab === 'ai');
+    const emE = S.easyMode ? { bg: '#E7F3F0', color: '#0E7E77' } : { bg: 'transparent', color: '#A39D8E' };
+    const emO = !S.easyMode ? { bg: '#E7F3F0', color: '#0E7E77' } : { bg: 'transparent', color: '#A39D8E' };
+
+    return {
+      ready, loading: !ready,
+      isHome, isPlaceholder: !isHome,
+      goHome: () => this.setTab('home'), goChart: () => { window.location.href = encodeURI('sttak 차트학습.dc.html'); }, goQuiz: () => { window.location.href = encodeURI('sttak 퀴즈.dc.html'); }, goMy: () => { window.location.href = encodeURI('sttak 마이.dc.html'); },
+      tc, phLabel: phMap[S.tab] || '', phIconColor: '#B6B0A2', phIconHtml: '',
+      refresh: () => this.refresh(), refreshAnim: S.refreshing ? 'scSpin .7s linear infinite' : 'none',
+      greeting, gMood, strip, focus, dots,
+      onDown: e => this.onDown(e), onMove: e => this.onMove(e), onUp: () => this.onUp(),
+      dragPx: S.dragX + 'px',
+      cardOpacity: S.dragging ? Math.max(0.55, 1 - Math.abs(S.dragX) / 520) : 1,
+      cardTransition: (S.dragging || S.noTrans) ? 'none' : 'transform .24s ease, opacity .24s ease',
+      openAI: () => this.openAI(),
+      onNewsClick: (e) => { const si = parseInt(e.currentTarget.getAttribute('data-si'), 10) || 0; const ni = parseInt(e.currentTarget.getAttribute('data-ni'), 10) || 0; this.openNews(si, ni); },
+      toast: S.toast, hasToast: !!S.toast,
+      sheetOpen, sd,
+      isEasy: S.detailTab === 'easy', isOrigin: S.detailTab === 'origin', isAI: S.detailTab === 'ai',
+      setEasy: () => this.setDetailTab('easy'), setOrigin: () => this.setDetailTab('origin'), setAI: () => this.setDetailTab('ai'),
+      dtE, dtO, dtA, emE, emO,
+      setEasyMode: () => this.toggleEasy(true), setOriginMode: () => this.toggleEasy(false),
+      chatMsgs, quick, chatTyping: S.chatTyping,
+      chatInput: S.chatInput, onChatInput: e => this.setState({ chatInput: e.target.value }), sendFree: () => this.sendFree(),
+      closeSheet: () => this.closeSheet(),
+      ctaLearn: () => { this.closeSheet(); this.setTab('chart'); },
+      externalLink: () => this.flash('외부 브라우저에서 원문을 열어요')
+    };
+  }
+}
+</script>
+</body>
+</html>

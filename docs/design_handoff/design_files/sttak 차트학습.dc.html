@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  div, span, p, h1, h2, h3 { word-break: keep-all; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  @keyframes scFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes scToast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @keyframes scSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes scDim { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</helmet>
+
+<div style="width: max-content; min-width: 100%; min-height: 100vh; box-sizing: border-box; padding: 52px; background: #ECE9E2; font-family: 'Pretendard', -apple-system, sans-serif; color: #26241F; display:flex; justify-content:center;">
+
+  <div style="position:relative; width: 417px; height: 876px; background:#0C0C0D; border-radius: 56px; padding: 12px; box-shadow: 0 24px 60px rgba(40,36,28,0.22), inset 0 0 0 2px #2b2b2e;">
+    <div style="position:relative; width: 393px; height: 852px; border-radius: 45px; overflow:hidden; background:#F7F4EE;">
+
+      <!-- status bar -->
+      <div style="position:absolute; top:0; left:0; right:0; height:54px; display:flex; align-items:center; justify-content:space-between; padding: 0 30px 0 32px; z-index:40;">
+        <div style="font-size:16px; font-weight:700; color:#26241F; font-family:'Space Grotesk',sans-serif; letter-spacing:0.02em;">9:41</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <div style="display:flex; align-items:flex-end; gap:2px; height:11px;">
+            <div style="width:3px; height:5px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:7px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:9px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:11px; background:#26241F; border-radius:1px;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:2px;">
+            <div style="width:23px; height:12px; border:1.5px solid #26241F; border-radius:3.5px; padding:1.5px;"><div style="width:100%; height:100%; background:#26241F; border-radius:1.5px;"></div></div>
+            <div style="width:1.5px; height:4px; background:#26241F; border-radius:0 1px 1px 0;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute; top:13px; left:50%; transform:translateX(-50%); width:124px; height:35px; background:#000; border-radius:20px; z-index:45;"></div>
+      <div style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:#26241F; opacity:0.82; z-index:45;"></div>
+
+      <div style="position:absolute; inset:0; display:flex; flex-direction:column; z-index:5;">
+
+        <!-- header -->
+        <div style="padding:60px 20px 0; display:flex; align-items:center; gap:10px;">
+          <svg width="10" height="17" viewBox="0 0 10 17" fill="none" stroke="#46443D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><polyline points="9 1 1.5 8.5 9 16"></polyline></svg>
+          <div style="font-size:19px; font-weight:700; letter-spacing:-0.02em;">{{ stock.name }}</div>
+          <div style="font-size:13px; font-weight:600; color:#A39D8E; font-family:'Space Grotesk',sans-serif;">{{ stock.code }}</div>
+          <div style="flex:1;"></div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1px; background:#FFFFFF; border:1px solid #ECE7DD; border-radius:12px; padding:6px 13px; box-shadow:0 1px 2px rgba(40,36,28,0.05);">
+            <div style="font-size:10px; font-weight:700; color:#A39D8E; letter-spacing:0.03em; white-space:nowrap;">투자 가능</div>
+            <div style="font-size:14px; font-weight:700; color:#26241F; font-family:'Space Grotesk',sans-serif; line-height:1; white-space:nowrap;">{{ cashStr }}<span style="font-size:11px; font-weight:600; color:#8A8478;"> 원</span></div>
+          </div>
+        </div>
+
+        <!-- watchlist chips -->
+        <div style="display:flex; gap:8px; overflow-x:auto; padding:14px 20px 0;">
+          <sc-for list="{{ chips }}" as="c" hint-placeholder-count="5">
+            <div onClick="{{ c.onSelect }}" style="flex:none; padding:8px 15px; border-radius:999px; font-size:13.5px; font-weight:700; cursor:pointer; white-space:nowrap; background:{{ c.bg }}; color:{{ c.color }}; box-shadow:{{ c.sh }};">{{ c.name }}</div>
+          </sc-for>
+        </div>
+
+        <!-- price -->
+        <div style="padding:16px 20px 8px; display:flex; align-items:baseline; gap:9px;">
+          <div style="font-size:30px; font-weight:700; letter-spacing:-0.02em; font-family:'Space Grotesk',sans-serif;">{{ stock.priceStr }}</div>
+          <div style="font-size:15px; font-weight:600; color:#8A8478;">원</div>
+          <div style="font-size:15.5px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:{{ stock.chgColor }};">{{ stock.chgStr }}</div>
+        </div>
+
+        <!-- scroll body -->
+        <div style="flex:1; overflow-y:auto; padding:0 16px 150px;">
+
+          <!-- chart card -->
+          <div style="background:#FFFFFF; border-radius:20px; padding:12px 12px 14px; box-shadow:0 1px 3px rgba(40,36,28,0.06);">
+            <canvas data-chart="1" onPointerDown="{{ onDown }}" onPointerMove="{{ onMove }}" onPointerUp="{{ onUp }}" onPointerCancel="{{ onUp }}" onWheel="{{ onWheel }}" style="width:100%; height:236px; display:block; touch-action:none; cursor:crosshair;"></canvas>
+            <div style="display:flex; gap:4px; background:#F2EFE8; border-radius:11px; padding:3px; margin-top:12px;">
+              <sc-for list="{{ periods }}" as="p" hint-placeholder-count="5">
+                <div onClick="{{ p.onSelect }}" style="flex:1; text-align:center; padding:7px 0; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; background:{{ p.bg }}; color:{{ p.color }}; box-shadow:{{ p.sh }};">{{ p.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- hint / selection -->
+          <sc-if value="{{ showDetail }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FFFFFF; border:1px solid #ECE7DD; border-radius:16px; padding:15px 16px; margin-top:12px; box-shadow:0 1px 3px rgba(40,36,28,0.06); animation: scFade .22s ease;">
+              <div style="display:flex; align-items:center; gap:9px; margin-bottom:13px;">
+                <div style="flex:none; width:22px; height:22px; border-radius:50%; background:#0FA39A; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:'Space Grotesk',sans-serif;">{{ detail.n }}</div>
+                <div style="font-size:14.5px; font-weight:700;">{{ detail.kind }}</div>
+                <div style="font-size:12px; font-weight:600; color:#A39D8E;">{{ detail.when }}</div>
+              </div>
+              <div style="display:flex; gap:9px; align-items:flex-start; margin-bottom:13px;">
+                <div style="flex:none; font-size:11px; font-weight:700; color:#0E7E77; background:#E7F3F0; padding:3px 8px; border-radius:7px; margin-top:1px;">이 신호</div>
+                <div style="flex:1; font-size:13.5px; color:#46443D; line-height:1.6;">{{ detail.signalText }}</div>
+              </div>
+              <div style="background:#F7F4EE; border-radius:13px; padding:13px 14px; margin-bottom:11px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                  <div style="font-size:12.5px; font-weight:700; color:#6E6A5E;">그 이후 7거래일</div>
+                  <div style="font-size:14.5px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:{{ detail.dirColor }};">{{ detail.pctStr }}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;">
+                  <div style="font-size:13.5px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:#8A8478;">{{ detail.beforeStr }}원</div>
+                  <svg width="20" height="12" viewBox="0 0 20 12" fill="none" stroke="{{ detail.dirColor }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M1 6h15"></path><polyline points="13 2 18 6 13 10"></polyline></svg>
+                  <div style="font-size:13.5px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:{{ detail.dirColor }};">{{ detail.afterStr }}원</div>
+                </div>
+                <div style="font-size:13px; color:#46443D; line-height:1.55;">{{ detail.afterText }}</div>
+              </div>
+              <div style="font-size:12px; color:#A39D8E; line-height:1.55; margin-bottom:13px;">{{ detail.caveat }}</div>
+              <div onClick="{{ askSel }}" style="display:flex; align-items:center; justify-content:center; gap:7px; height:44px; border-radius:12px; background:#E7F3F0; color:#0E7E77; font-size:13.5px; font-weight:700; cursor:pointer;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#0FA39A"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg>
+                이 사례, AI에게 더 물어보기
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ showAsk }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ askSel }}" style="display:flex; align-items:center; gap:9px; background:#E7F3F0; border-radius:13px; padding:11px 14px; margin-top:12px; cursor:pointer;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#0FA39A" style="flex:none;"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg>
+              <div style="flex:1; font-size:13.5px; font-weight:700; color:#0E7E77;">{{ selLabel }} 구간, AI에게 물어볼까요?</div>
+              <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#0E7E77" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><polyline points="1 1 7 7 1 13"></polyline></svg>
+            </div>
+          </sc-if>
+          <sc-if value="{{ showSignalHint }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; align-items:center; gap:8px; padding:13px 6px 4px; color:#8A8478;">
+              <div style="flex:none; width:16px; height:16px; border-radius:50%; background:#0FA39A;"></div>
+              <div style="font-size:13px; font-weight:600;">색칠된 구간이 과거에 이 신호가 나왔던 사례예요</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ showPlainHint }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; align-items:center; gap:8px; padding:13px 6px 4px; color:#A39D8E;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+              <div style="font-size:13px; font-weight:500;">차트를 톡 누르거나 좌우로 쓸어 지점·구간을 골라 물어보세요</div>
+            </div>
+          </sc-if>
+
+          <!-- indicators -->
+          <div style="display:flex; align-items:flex-start; gap:8px; padding:20px 4px 12px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#0FA39A" style="flex:none; margin-top:1px;"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg>
+            <div style="font-size:13.5px; font-weight:700; line-height:1.45; color:#46443D;">용어를 누르면, 과거에 그 신호가 통했던 구간을 차트에 표시해요</div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <sc-for list="{{ indicators }}" as="ind" hint-placeholder-count="6">
+              <div onClick="{{ ind.onSelect }}" style="display:flex; align-items:center; gap:7px; padding:9px 14px; border-radius:12px; font-size:13.5px; font-weight:700; cursor:pointer; white-space:nowrap; background:{{ ind.bg }}; color:{{ ind.color }}; box-shadow:{{ ind.sh }};">
+                <div style="width:8px; height:8px; border-radius:50%; background:{{ ind.dot }};"></div>
+                {{ ind.label }}
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- coach card -->
+          <div style="background:#FFFFFF; border-radius:18px; padding:18px; margin-top:16px; box-shadow:0 1px 3px rgba(40,36,28,0.06);">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:30px; height:30px; border-radius:9px; background:#0FA39A; display:flex; align-items:center; justify-content:center; flex:none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg>
+              </div>
+              <div style="flex:1; font-size:15px; font-weight:700;">{{ coach.title }}</div>
+              <div onClick="{{ toggleExpl }}" style="flex:none; font-size:12.5px; font-weight:700; color:#0E7E77; padding:6px 10px; border-radius:9px; background:#EEF4F2; cursor:pointer;">{{ coach.toggleLabel }}</div>
+            </div>
+            <sc-if value="{{ coach.explOpen }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:14px; color:#46443D; line-height:1.65; margin-top:12px;">{{ coach.body }}</div>
+              <sc-if value="{{ coach.hasInfo }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; gap:8px; margin-top:14px;">
+                  <div style="flex:1; background:#F7F4EE; border-radius:12px; padding:12px 10px; text-align:center;"><div style="font-size:11.5px; color:#A39D8E; font-weight:600; margin-bottom:4px;">시가총액</div><div style="font-size:14.5px; font-weight:700; font-family:'Space Grotesk',sans-serif;">{{ coach.cap }}</div></div>
+                  <div style="flex:1; background:#F7F4EE; border-radius:12px; padding:12px 10px; text-align:center;"><div style="font-size:11.5px; color:#A39D8E; font-weight:600; margin-bottom:4px;">PER</div><div style="font-size:14.5px; font-weight:700; font-family:'Space Grotesk',sans-serif;">{{ coach.per }}</div></div>
+                  <div style="flex:1; background:#F7F4EE; border-radius:12px; padding:12px 10px; text-align:center;"><div style="font-size:11.5px; color:#A39D8E; font-weight:600; margin-bottom:4px;">PBR</div><div style="font-size:14.5px; font-weight:700; font-family:'Space Grotesk',sans-serif;">{{ coach.pbr }}</div></div>
+                </div>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{ coach.hasCur }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; gap:9px; align-items:flex-start; background:#F7F4EE; border-radius:13px; padding:12px 14px; margin-top:14px;">
+                <div style="flex:none; font-size:11.5px; font-weight:700; color:#0E7E77; background:#E7F3F0; padding:3px 8px; border-radius:7px; margin-top:1px;">지금</div>
+                <div style="font-size:13.5px; font-weight:600; color:#46443D; line-height:1.5;">{{ coach.curRead }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ coach.hasEvents }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:16px;">
+                <div style="font-size:13px; font-weight:700; color:#46443D; margin-bottom:3px;">차트에 표시된 과거 사례</div>
+                <div style="font-size:12px; color:#A39D8E; margin-bottom:11px; line-height:1.5;">번호를 누르면 그 시점으로 차트가 이동해요</div>
+                <sc-for list="{{ coach.events }}" as="e" hint-placeholder-count="3">
+                  <div onClick="{{ e.onFocus }}" style="display:flex; align-items:center; gap:11px; padding:11px 12px; border-radius:12px; background:#F7F4EE; margin-bottom:8px; cursor:pointer;">
+                    <div style="flex:none; width:22px; height:22px; border-radius:50%; background:#0FA39A; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:'Space Grotesk',sans-serif;">{{ e.n }}</div>
+                    <div style="flex:1; min-width:0;"><div style="font-size:13px; font-weight:700; color:#26241F;">{{ e.label }}</div><div style="font-size:12px; font-weight:600; color:{{ e.dirColor }}; margin-top:2px;">{{ e.dirLabel }}</div></div>
+                    <div style="flex:none; font-size:14px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:{{ e.dirColor }};">{{ e.pctStr }}</div>
+                  </div>
+                </sc-for>
+                <div style="font-size:12px; color:#A39D8E; margin-top:6px; line-height:1.55;">{{ coach.caveat }}</div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <!-- AI float -->
+        <div onClick="{{ openAI }}" style="position:absolute; right:18px; bottom:158px; z-index:30; display:flex; align-items:center; gap:7px; background:rgba(38,36,31,0.92); backdrop-filter:blur(4px); border-radius:999px; padding:11px 15px 11px 13px; box-shadow:0 6px 18px rgba(40,36,28,0.22); cursor:pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#7FE3D8"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg>
+          <span style="font-size:13.5px; font-weight:700; color:#FFFFFF;">AI에게 묻기</span>
+        </div>
+
+        <!-- trade bar -->
+        <div style="position:absolute; left:0; right:0; bottom:86px; z-index:25; background:#FFFFFF; border-top:1px solid #EEEAE0; padding:12px 16px 14px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:11px;">
+            <div style="font-size:12.5px; font-weight:600; color:#8A8478;">모의투자 · 보유 {{ holdShares }}주</div>
+            <div style="font-size:12.5px; font-weight:700; color:#46443D;">{{ tradeRLabel }} <span style="font-family:'Space Grotesk',sans-serif;">{{ tradeRVal }}</span>원</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div onClick="{{ openSell }}" style="flex:1; height:50px; border-radius:14px; background:#EAF0FB; color:#3A6DE8; display:flex; align-items:center; justify-content:center; font-size:15.5px; font-weight:700; cursor:pointer;">매도</div>
+            <div onClick="{{ openBuy }}" style="flex:1.4; height:50px; border-radius:14px; background:#E14B43; color:#fff; display:flex; align-items:center; justify-content:center; font-size:15.5px; font-weight:700; cursor:pointer;">매수</div>
+          </div>
+        </div>
+
+        <!-- tab bar -->
+        <div style="position:absolute; bottom:0; left:0; right:0; height:86px; background:rgba(247,244,238,0.96); backdrop-filter:blur(12px); border-top:1px solid #EAE5DB; display:flex; padding:8px 8px 22px; z-index:35;">
+          <div onClick="{{ navHome }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:#B6B0A2;">
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#0FA39A;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16h16"></path><polyline points="7 14 11 10 14 13 19 7"></polyline></svg>
+            <span style="font-size:11px; font-weight:700;">차트학습</span>
+          </div>
+          <div onClick="{{ navQuiz }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:#B6B0A2;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.6 2.6 0 1 1 3.7 2.4c-.8.4-1.1.9-1.1 1.7"></path><circle cx="12" cy="16.6" r="0.6" fill="currentColor" stroke="none"></circle></svg>
+            <span style="font-size:11px; font-weight:600;">퀴즈</span>
+          </div>
+          <div onClick="{{ navMy }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:#B6B0A2;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"></path></svg>
+            <span style="font-size:11px; font-weight:600;">마이</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== buy / sell sheet ===== -->
+      <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeSheet }}" style="position:absolute; inset:0; background:rgba(20,18,14,0.42); z-index:55; animation: scDim .2s ease;"></div>
+        <div style="position:absolute; left:0; right:0; bottom:0; z-index:56; background:#FFFFFF; border-radius:26px 26px 0 0; padding:10px 22px 28px; animation: scSheetUp .26s cubic-bezier(.2,.8,.2,1); max-height:92%; overflow-y:auto;">
+          <div style="width:38px; height:5px; border-radius:3px; background:#E4DFD4; margin:0 auto 16px;"></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+            <div style="font-size:19px; font-weight:700; letter-spacing:-0.01em;">{{ sheet.title }}</div>
+            <div onClick="{{ closeSheet }}" style="width:30px; height:30px; border-radius:50%; background:#F2EFE8; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#8A8478;">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l12 12M13 1L1 13"></path></svg>
+            </div>
+          </div>
+
+          <div style="background:#F7F4EE; border-radius:16px; padding:16px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+              <div style="display:flex; align-items:center; gap:13px;">
+                <div onClick="{{ dec }}" style="width:36px; height:36px; border-radius:10px; background:#FFFFFF; border:1px solid #E7E2D8; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; color:#46443D; cursor:pointer;">−</div>
+                <div style="text-align:center; min-width:58px;"><span style="font-size:22px; font-weight:700; font-family:'Space Grotesk',sans-serif;">{{ sheet.qty }}</span><span style="font-size:15px; font-weight:600; color:#8A8478;"> 주</span></div>
+                <div onClick="{{ inc }}" style="width:36px; height:36px; border-radius:10px; background:#FFFFFF; border:1px solid #E7E2D8; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; color:#46443D; cursor:pointer;">+</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:12px; color:#A39D8E; font-weight:600;">{{ sheet.priceStr }}원 · {{ sheet.capLabel }}</div>
+                <div style="font-size:18px; font-weight:700; font-family:'Space Grotesk',sans-serif; margin-top:3px;">{{ sheet.totalStr }}원</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <sc-for list="{{ sheet.presets }}" as="p" hint-placeholder-count="3">
+                <div onClick="{{ p.onSelect }}" style="flex:1; text-align:center; padding:9px 0; border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer; background:{{ p.bg }}; color:{{ p.color }};">{{ p.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="#0FA39A"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg>
+            <div style="font-size:15px; font-weight:700;">왜 이 매매를 하나요?</div>
+          </div>
+          <div style="font-size:13px; color:#8A8478; line-height:1.5; margin-bottom:11px;">근거를 적어 두면, 나중에 AI가 결과와 비교해 회고를 도와줘요.</div>
+          <textarea value="{{ sheet.reason }}" onChange="{{ setReason }}" onInput="{{ setReason }}" placeholder="직접 적어 보세요. 예: ‘실적이 좋아질 것 같아서’, ‘일단 감으로 해보는 중’처럼 편하게요." maxlength="140" style="width:100%; height:82px; box-sizing:border-box; border:1px solid #E7E2D8; border-radius:14px; padding:13px; font-family:inherit; font-size:14px; line-height:1.5; color:#26241F; resize:none; outline:none; background:#FFFFFF;"></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin:7px 2px 16px;">
+            <div style="font-size:12px; color:#A39D8E;">솔직한 ‘감’도 괜찮아요. 그대로 적어 두면 돼요</div>
+            <div style="font-size:12px; color:#A39D8E; font-family:'Space Grotesk',sans-serif;">{{ sheet.len }}/140</div>
+          </div>
+          <div style="font-size:12px; font-weight:700; color:#8A8478; margin-bottom:9px;">빠른 선택</div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+            <sc-for list="{{ sheet.quick }}" as="q" hint-placeholder-count="3">
+              <div onClick="{{ q.onPick }}" style="padding:13px 15px; border-radius:12px; border:1px solid #ECE7DD; background:#FFFFFF; font-size:13.5px; font-weight:600; color:#46443D; cursor:pointer;">{{ q.text }}</div>
+            </sc-for>
+          </div>
+          <div onClick="{{ exec }}" style="height:54px; border-radius:15px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; cursor:pointer; background:{{ sheet.execBg }}; color:{{ sheet.execColor }};">{{ sheet.execLabel }}</div>
+        </div>
+      </sc-if>
+
+      <!-- ===== AI retro (sell) ===== -->
+      <sc-if value="{{ retroOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; z-index:58; background:#F7F4EE; animation: scSheetUp .3s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column;">
+          <div style="padding:60px 22px 14px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:9px;">
+              <div style="width:28px; height:28px; border-radius:8px; background:#0FA39A; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.5l1.7 6.1 6.1 1.7-6.1 1.7L12 18.1l-1.7-6.1L4.2 10.3l6.1-1.7z"></path></svg></div>
+              <div style="font-size:18px; font-weight:700;">매도 회고</div>
+            </div>
+            <div onClick="{{ closeRetro }}" style="width:30px; height:30px; border-radius:50%; background:#EDE9E0; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#8A8478;">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1l12 12M13 1L1 13"></path></svg>
+            </div>
+          </div>
+          <div style="flex:1; overflow-y:auto; padding:4px 22px 30px;">
+            <div style="font-size:13.5px; color:#8A8478; line-height:1.6; margin-bottom:16px;">이번 결정과 그때의 상황에만 집중한 피드백이에요. 점수를 매기는 게 아니라, 다음 판단을 돕기 위한 거예요.</div>
+
+            <div style="background:#FFFFFF; border-radius:18px; padding:18px; box-shadow:0 1px 3px rgba(40,36,28,0.06); margin-bottom:12px;">
+              <div style="font-size:12px; color:#A39D8E; font-weight:600; margin-bottom:8px;">이번 결정</div>
+              <div style="font-size:17px; font-weight:700; margin-bottom:12px;">{{ retro.sumLine }}</div>
+              <div style="display:flex; align-items:baseline; gap:9px;">
+                <div style="font-size:13px; color:#8A8478; font-weight:600;">실현 손익</div>
+                <div style="font-size:19px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:{{ retro.pnlColor }};">{{ retro.pnlStr }}</div>
+                <div style="font-size:14px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:{{ retro.pnlColor }};">{{ retro.pnlPctStr }}</div>
+              </div>
+              <sc-if value="{{ retro.partial }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:12px; font-size:12.5px; color:#6E6A5E; background:#F7F4EE; border-radius:10px; padding:10px 12px; line-height:1.5;">일부만 매도했어요. 남은 수량은 계속 보유 중이라, 같은 방식으로 회고가 쌓여요.</div>
+              </sc-if>
+            </div>
+
+            <div style="background:#FFFFFF; border-radius:18px; padding:18px; box-shadow:0 1px 3px rgba(40,36,28,0.06); margin-bottom:12px;">
+              <div style="font-size:12px; color:#A39D8E; font-weight:600; margin-bottom:8px;">그때 적은 이유</div>
+              <div style="font-size:14.5px; color:#26241F; line-height:1.65;">“{{ retro.reason }}”</div>
+            </div>
+
+            <div style="background:#FFFFFF; border-radius:18px; padding:18px; box-shadow:0 1px 3px rgba(40,36,28,0.06); margin-bottom:12px;">
+              <div style="font-size:14px; font-weight:700; margin-bottom:13px;">잘한 부분</div>
+              <sc-for list="{{ retro.good }}" as="g" hint-placeholder-count="2">
+                <div style="display:flex; gap:10px; margin-bottom:11px; align-items:flex-start;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0FA39A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-top:1px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <div style="font-size:13.5px; color:#46443D; line-height:1.6;">{{ g }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="background:#FFFFFF; border-radius:18px; padding:18px; box-shadow:0 1px 3px rgba(40,36,28,0.06); margin-bottom:14px;">
+              <div style="font-size:14px; font-weight:700; margin-bottom:13px;">함께 살펴볼 부분</div>
+              <sc-for list="{{ retro.watch }}" as="w" hint-placeholder-count="2">
+                <div style="display:flex; gap:10px; margin-bottom:11px; align-items:flex-start;">
+                  <div style="flex:none; width:6px; height:6px; border-radius:50%; background:#C9A23A; margin-top:7px;"></div>
+                  <div style="font-size:13.5px; color:#46443D; line-height:1.6;">{{ w }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ retro.follow }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#26241F; border-radius:18px; padding:18px; margin-bottom:14px;">
+                <div style="font-size:12px; color:#9A968B; font-weight:600; margin-bottom:11px;">한 달 뒤 후속 회고</div>
+                <div style="display:flex; align-items:baseline; gap:9px; margin-bottom:13px;">
+                  <div style="font-size:13px; color:#C9C4B8;">한 달 뒤 주가</div>
+                  <div style="font-size:18px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:#fff;">{{ retro.futStr }}원</div>
+                  <div style="font-size:14px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:{{ retro.diffColor }};">{{ retro.diffStr }}</div>
+                </div>
+                <div style="font-size:13.5px; line-height:1.7; color:#E7E3DA;">{{ retro.followText }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ retro.notFollow }}" hint-placeholder-val="{{ true }}">
+              <div onClick="{{ toggleFollow }}" style="display:flex; align-items:center; justify-content:center; gap:8px; height:50px; border-radius:14px; border:1px dashed #C9C2B4; color:#6E6A5E; font-size:14px; font-weight:700; cursor:pointer; margin-bottom:14px;">한 달 뒤 결과 미리 보기</div>
+            </sc-if>
+
+            <div onClick="{{ closeRetro }}" style="height:54px; border-radius:15px; background:#0FA39A; color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; cursor:pointer;">확인 · 마이페이지에 저장됐어요</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; bottom:200px; left:50%; transform:translateX(-50%); background:#26241F; color:#fff; padding:11px 18px; border-radius:999px; font-size:13.5px; font-weight:600; z-index:60; animation: scToast 0.25s ease; white-space:nowrap; max-width:330px; text-align:center; line-height:1.4;">{{ toast }}</div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:960}}">
+class Component extends DCLogic {
+  state = { stock: 0, period: '1개월', indicator: null, explOpen: true, sel: null, view: { start: 218, count: 22 }, toast: '', sheet: null, qty: 10, reason: '', retro: null, retroFollow: false };
+  hold = 0; avg = 0; cash = 10000000; trades = [];
+
+  stocks = [
+    { name: '삼성전자', code: '005930', price: 71200, chg: 1.78, seed: 7, base: 60000, cap: '424조', per: '14.2배', pbr: '1.4배' },
+    { name: 'SK하이닉스', code: '000660', price: 198500, chg: 1.12, seed: 13, base: 170000, cap: '144조', per: '9.1배', pbr: '1.8배' },
+    { name: 'NAVER', code: '035420', price: 215000, chg: -0.81, seed: 21, base: 225000, cap: '35조', per: '21.4배', pbr: '1.2배' },
+    { name: '카카오', code: '035720', price: 47150, chg: 0.64, seed: 29, base: 52000, cap: '21조', per: '38.0배', pbr: '1.5배' },
+    { name: '현대차', code: '005380', price: 248000, chg: -1.20, seed: 37, base: 240000, cap: '52조', per: '5.1배', pbr: '0.6배' }
+  ];
+  periodMap = { '1일': 6, '1주': 12, '1개월': 22, '3개월': 66, '1년': 240 };
+
+  _candleCache = {};
+  candles(si) {
+    if (this._candleCache[si]) return this._candleCache[si];
+    const st = this.stocks[si];
+    let s = st.seed * 9301 + 49297, v = st.base;
+    const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+    const out = [];
+    for (let i = 0; i < 240; i++) {
+      const drift = (rnd() - 0.47) * 0.022 + (i > 150 ? 0.001 : 0);
+      const o = v, c = v * (1 + drift);
+      const h = Math.max(o, c) * (1 + rnd() * 0.013), l = Math.min(o, c) * (1 - rnd() * 0.013);
+      out.push({ o, c, h, l, v: Math.round((0.5 + rnd()) * 1.2e6) });
+      v = c;
+    }
+    const k = st.price / out[239].c;
+    out.forEach(d => { d.o *= k; d.c *= k; d.h *= k; d.l *= k; });
+    this._candleCache[si] = out;
+    return out;
+  }
+  ma(c, p) { const o = []; for (let i = 0; i < c.length; i++) { if (i < p - 1) { o.push(null); continue; } let s = 0; for (let j = i - p + 1; j <= i; j++) s += c[j].c; o.push(s / p); } return o; }
+  rsi(c, p = 14) { const o = []; let g = 0, l = 0; for (let i = 0; i < c.length; i++) { if (i === 0) { o.push(null); continue; } const d = c[i].c - c[i - 1].c; const up = Math.max(d, 0), dn = Math.max(-d, 0); if (i <= p) { g += up; l += dn; if (i === p) { g /= p; l /= p; o.push(100 - 100 / (1 + g / (l || 1e-9))); } else o.push(null); } else { g = (g * (p - 1) + up) / p; l = (l * (p - 1) + dn) / p; o.push(100 - 100 / (1 + g / (l || 1e-9))); } } return o; }
+  boll(c, p = 20) { const m = this.ma(c, p); const up = [], lo = []; for (let i = 0; i < c.length; i++) { if (i < p - 1) { up.push(null); lo.push(null); continue; } let s = 0; for (let j = i - p + 1; j <= i; j++) s += (c[j].c - m[i]) ** 2; const sd = Math.sqrt(s / p); up.push(m[i] + 2 * sd); lo.push(m[i] - 2 * sd); } return { m, up, lo }; }
+
+  computeSignals(k) {
+    if (!k || k === '정보') return [];
+    const c = this.candles(this.state.stock);
+    const ev = [];
+    const after = i => { const j = Math.min(c.length - 1, i + 7); return (c[j].c - c[i].c) / c[i].c * 100; };
+    const push = (i, kind) => { if (i < 5 || i > c.length - 2) return; const pct = after(i); const dir = pct > 1.5 ? 'up' : pct < -1.5 ? 'down' : 'side'; ev.push({ idx: i, kind, pct, dir }); };
+    if (k === '이동평균선') { const a = this.ma(c, 5), b = this.ma(c, 20); for (let i = 21; i < c.length; i++) { if (a[i - 1] != null && b[i - 1] != null) { if (a[i - 1] <= b[i - 1] && a[i] > b[i]) push(i, '골든크로스'); else if (a[i - 1] >= b[i - 1] && a[i] < b[i]) push(i, '데드크로스'); } } }
+    else if (k === 'RSI') { const r = this.rsi(c); for (let i = 15; i < c.length; i++) { if (r[i - 1] != null && r[i] != null) { if (r[i - 1] < 70 && r[i] >= 70) push(i, 'RSI 과열(70↑)'); else if (r[i - 1] > 30 && r[i] <= 30) push(i, 'RSI 과매도(30↓)'); } } }
+    else if (k === '볼린저밴드') { const bb = this.boll(c); for (let i = 20; i < c.length; i++) { if (bb.up[i] != null) { if (c[i].c >= bb.up[i]) push(i, '위 띠 터치'); else if (c[i].c <= bb.lo[i]) push(i, '아래 띠 터치'); } } }
+    else if (k === '지지·저항') { for (let i = 4; i < c.length - 4; i++) { const w = c.slice(i - 4, i + 5); if (c[i].l === Math.min(...w.map(d => d.l))) push(i, '지지 테스트'); else if (c[i].h === Math.max(...w.map(d => d.h))) push(i, '저항 테스트'); } }
+    else if (k === '거래량') { for (let i = 21; i < c.length; i++) { let s = 0; for (let j = i - 20; j < i; j++) s += c[j].v; if (c[i].v > (s / 20) * 1.38) push(i, '거래량 급증'); } }
+    const ded = []; for (const e of ev) { if (!ded.length || e.idx - ded[ded.length - 1].idx >= 5) ded.push(e); else ded[ded.length - 1] = e; }
+    const recent = ded.slice(-3);
+    recent.forEach((e, n) => { e.n = n + 1; e.daysAgo = 240 - e.idx; e.dirLabel = e.dir === 'up' ? '7일 뒤 상승 흐름' : e.dir === 'down' ? '7일 뒤 하락 흐름' : '7일 뒤 횡보'; e.dirColor = e.dir === 'up' ? '#E14B43' : e.dir === 'down' ? '#3A6DE8' : '#8A8478'; e.pctStr = (e.pct >= 0 ? '+' : '') + e.pct.toFixed(1) + '%'; });
+    return recent;
+  }
+
+  currentRead(k) {
+    if (!k) return '';
+    const c = this.candles(this.state.stock), i = c.length - 1, price = c[i].c;
+    if (k === '정보') { const per = parseFloat(this.stocks[this.state.stock].per); return per > 20 ? '지금 PER이 다소 높은 편이라, 기대가 많이 반영돼 있을 수 있어요. 업종 평균과 함께 보세요.' : '지금 PER은 부담이 크지 않은 편이에요. 다만 업종마다 기준이 달라 함께 봐야 해요.'; }
+    if (k === '이동평균선') { const a = this.ma(c, 5)[i], b = this.ma(c, 20)[i], above = price > b; return `지금은 가격이 20일선 ${above ? '위' : '아래'}에 있고 단기선이 장기선 ${a > b ? '위' : '아래'}라, 흐름은 \u2018${above && a > b ? '위쪽' : (!above && a < b ? '아래쪽' : '중립')}\u2019으로 읽혀요.`; }
+    if (k === 'RSI') { const r = this.rsi(c)[i] || 50; const b = r >= 70 ? '과열 구간' : r <= 30 ? '과매도 구간' : '중립 구간'; return `지금 RSI는 약 ${Math.round(r)}로 ${b}이에요.`; }
+    if (k === '볼린저밴드') { const bb = this.boll(c); const pos = price > bb.m[i] ? '중간선 위' : '중간선 아래'; return `지금 가격은 ${pos}에 있어요. 위·아래 띠 사이에서 움직이는 폭을 함께 보세요.`; }
+    if (k === '지지·저항') { return '지금 가격이 최근 지지·저항 중 어디에 가까운지 차트의 점선으로 확인해 보세요.'; }
+    if (k === '거래량') { let s = 0; for (let j = i - 20; j < i; j++) s += c[j].v; const hot = c[i].v > (s / 20) * 1.3; return `최근 거래량은 평소보다 ${hot ? '많은' : '비슷한'} 편이에요.`; }
+    return '';
+  }
+
+  eventDetail(ev) {
+    const c = this.candles(this.state.stock);
+    const i = ev.idx, j = Math.min(c.length - 1, i + 7);
+    const before = Math.round(c[i].c), after = Math.round(c[j].c);
+    const sigMap = {
+      '골든크로스': '단기 이동평균선(5일)이 장기선(20일)을 아래에서 위로 뚫었어요. 짧은 흐름이 위로 돌아섰다고 보는 자리예요.',
+      '데드크로스': '단기선(5일)이 장기선(20일)을 위에서 아래로 뚫었어요. 짧은 흐름이 아래로 꺾였다고 보는 자리예요.',
+      'RSI 과열(70↑)': 'RSI가 70을 넘어 ‘과열’ 구간에 들어섰어요. 단기적으로 많이 올라 비쌀 수 있다는 뜻이에요.',
+      'RSI 과매도(30↓)': 'RSI가 30 아래로 내려가 ‘과매도’ 구간이에요. 단기적으로 많이 빠져 쌀 수 있다는 뜻이에요.',
+      '위 띠 터치': '가격이 볼린저밴드 위쪽 띠에 닿았어요. 단기적으로 과열로 보는 자리예요.',
+      '아래 띠 터치': '가격이 볼린저밴드 아래쪽 띠에 닿았어요. 단기적으로 과매도로 보는 자리예요.',
+      '지지 테스트': '가격이 최근 잘 안 내려가던 ‘지지선’ 부근까지 내려왔어요. 바닥을 시험하는 자리예요.',
+      '저항 테스트': '가격이 최근 잘 못 넘던 ‘저항선’ 부근까지 올라왔어요. 천장을 시험하는 자리예요.',
+      '거래량 급증': '평소보다 거래량이 크게 늘었어요. 관심이 갑자기 몰렸다는 신호예요.'
+    };
+    const afterMap = {
+      up: '이후 7거래일 동안 가격이 오르는 흐름이 이어졌어요.',
+      down: '이후 7거래일 동안 가격이 내리는 흐름이었어요.',
+      side: '이후 7거래일 동안 큰 변화 없이 횡보했어요.'
+    };
+    return {
+      n: ev.n, kind: ev.kind, when: ev.daysAgo <= 1 ? '최근' : ev.daysAgo + '일 전',
+      signalText: sigMap[ev.kind] || '이 지점에서 신호가 나타났어요.',
+      afterText: afterMap[ev.dir], dirColor: ev.dirColor, pctStr: ev.pctStr,
+      beforeStr: before.toLocaleString('ko-KR'), afterStr: after.toLocaleString('ko-KR'),
+      caveat: '이건 과거의 한 사례일 뿐이에요. 같은 신호라도 다음에는 다르게 흐를 수 있어요.'
+    };
+  }
+
+  componentDidMount() { this.loadPort(); try { this._seen = JSON.parse(localStorage.getItem('sttak_ind_seen') || '{}'); } catch (e) { this._seen = {}; } this._ro = () => this.draw(); window.addEventListener('resize', this._ro); this.draw(); }
+  componentDidUpdate() { this.draw(); }
+  componentWillUnmount() { window.removeEventListener('resize', this._ro); clearTimeout(this._tt); }
+
+  flash(m) { this.setState({ toast: m }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 2200); }
+
+  setStock(i) { this.setState({ stock: i, sel: null, indicator: null }); }
+  setPeriod(p) { const count = this.periodMap[p]; this.setState({ period: p, view: { start: Math.max(0, 240 - count), count }, sel: null }); }
+  setIndicator(k) {
+    if (this.state.indicator === k) { this.setState({ indicator: null }); return; }
+    const seen = this._seen || {}; const firstTime = !seen[k]; seen[k] = true; this._seen = seen;
+    try { localStorage.setItem('sttak_ind_seen', JSON.stringify(seen)); } catch (e) {}
+    const np = { indicator: k, explOpen: firstTime, sel: null };
+    if (k !== '정보') { np.period = '3개월'; np.view = { start: 174, count: 66 }; }
+    this.setState(np);
+  }
+  toggleExpl() { this.setState(s => ({ explOpen: !s.explOpen })); }
+  focusEvent(idx) { const cnt = Math.min(80, Math.max(44, this.state.view.count)); const start = Math.max(0, Math.min(240 - cnt, Math.round(idx - cnt / 2))); this.setState({ view: { start, count: cnt }, sel: idx }); }
+
+  _cssW() { const cv = document.querySelector('[data-chart]'); return cv ? cv.clientWidth : 360; }
+  onDown(e) { this._pts = this._pts || {}; this._pts[e.pointerId] = e.clientX; this._sx = e.clientX; this._moved = 0; this._startView = { ...this.state.view }; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {} const ids = Object.keys(this._pts); if (ids.length === 2) this._pinch0 = Math.abs(this._pts[ids[0]] - this._pts[ids[1]]); }
+  onMove(e) {
+    if (!this._pts || this._pts[e.pointerId] === undefined) return;
+    this._pts[e.pointerId] = e.clientX;
+    const ids = Object.keys(this._pts), w = this._cssW(), v = this._startView || this.state.view;
+    if (ids.length >= 2 && this._pinch0) {
+      const d = Math.abs(this._pts[ids[0]] - this._pts[ids[1]]) || 1;
+      let count = Math.max(8, Math.min(240, Math.round(v.count * (this._pinch0 / d))));
+      let start = Math.max(0, Math.min(240 - count, v.start + (v.count - count) / 2));
+      this.setState({ view: { start: Math.round(start), count } });
+    } else {
+      const dx = e.clientX - this._sx; this._moved = Math.max(this._moved, Math.abs(dx));
+      const cw = w / v.count; let start = Math.round(v.start - dx / cw); start = Math.max(0, Math.min(240 - v.count, start));
+      if (start !== this.state.view.start) this.setState({ view: { start, count: v.count } });
+    }
+  }
+  onUp(e) {
+    if (this._pts) delete this._pts[e.pointerId];
+    this._pinch0 = null;
+    if (this._moved < 6 && e.type === 'pointerup') {
+      const rect = e.currentTarget.getBoundingClientRect(); const v = this.state.view; const cw = rect.width / v.count;
+      const idx = Math.floor(v.start + (e.clientX - rect.left) / cw);
+      if (idx >= 0 && idx < 240) this.setState({ sel: idx });
+    }
+  }
+  onWheel(e) { const v = this.state.view; let count = Math.max(8, Math.min(240, Math.round(v.count * (e.deltaY > 0 ? 1.12 : 0.89)))); let start = Math.max(0, Math.min(240 - count, Math.round(v.start + (v.count - count) / 2))); this.setState({ view: { start, count } }); }
+
+  draw() {
+    const cv = document.querySelector('[data-chart]'); if (!cv) return;
+    const dpr = window.devicePixelRatio || 2, W = cv.clientWidth, H = cv.clientHeight; if (!W) return;
+    cv.width = W * dpr; cv.height = H * dpr;
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const c = this.candles(this.state.stock), v = this.state.view, ind = this.state.indicator;
+    const subOn = ind === 'RSI' || ind === '거래량';
+    const padT = 12, padB = subOn ? 4 : 8, padR = 6, padL = 6;
+    const priceH = subOn ? H * 0.64 : H - padT - padB;
+    const subY = padT + priceH + 10, subH = subOn ? H - subY - 6 : 0;
+    const i0 = Math.floor(v.start), i1 = Math.min(240, i0 + v.count), vis = c.slice(i0, i1);
+    let mn = Infinity, mx = -Infinity; vis.forEach(d => { mn = Math.min(mn, d.l); mx = Math.max(mx, d.h); });
+    let bands = null, mas = null, rsiArr = null;
+    if (ind === '볼린저밴드') { bands = this.boll(c); vis.forEach((d, k) => { const u = bands.up[i0 + k], l = bands.lo[i0 + k]; if (u) mx = Math.max(mx, u); if (l) mn = Math.min(mn, l); }); }
+    if (ind === '이동평균선') mas = [[5, '#0FA39A'], [20, '#E0A33A'], [60, '#9A7BD0'], [120, '#9AA095']].map(([p, col]) => ({ p, col, arr: this.ma(c, p) }));
+    if (ind === 'RSI') rsiArr = this.rsi(c);
+    const pad = (mx - mn) * 0.08; mn -= pad; mx += pad;
+    const cw = (W - padL - padR) / v.count, x = k => padL + (k + 0.5) * cw, y = p => padT + priceH - ((p - mn) / (mx - mn)) * priceH;
+
+    ctx.strokeStyle = '#F1ECE3'; ctx.lineWidth = 1;
+    for (let g = 0; g <= 3; g++) { const yy = padT + (priceH / 3) * g; ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke(); }
+
+    // past-signal regions (background)
+    const sig = this._signals || [];
+    sig.forEach(ev => {
+      if (ev.idx < i0 || ev.idx >= i1) return;
+      const k = ev.idx - i0, kEnd = Math.min(v.count, k + 8);
+      const foc = ev.idx === this.state.sel;
+      ctx.fillStyle = ev.dir === 'up' ? (foc ? 'rgba(225,75,67,0.18)' : 'rgba(225,75,67,0.10)') : ev.dir === 'down' ? (foc ? 'rgba(58,109,232,0.18)' : 'rgba(58,109,232,0.10)') : (foc ? 'rgba(138,132,120,0.2)' : 'rgba(138,132,120,0.12)');
+      ctx.fillRect(padL + k * cw, padT, (kEnd - k) * cw, priceH);
+      ctx.strokeStyle = ev.dir === 'up' ? 'rgba(225,75,67,0.32)' : ev.dir === 'down' ? 'rgba(58,109,232,0.32)' : 'rgba(138,132,120,0.4)';
+      ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL + k * cw, padT); ctx.lineTo(padL + k * cw, padT + priceH); ctx.stroke(); ctx.setLineDash([]);
+    });
+
+    if (ind === '지지·저항') {
+      const sup = Math.min(...vis.map(d => d.l)), res = Math.max(...vis.map(d => d.h));
+      [[sup, '#3A6DE8', '지지'], [res, '#E14B43', '저항']].forEach(([p, col, lb]) => {
+        ctx.strokeStyle = col; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(padL, y(p)); ctx.lineTo(W - padR, y(p)); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = col; ctx.font = '600 10px Pretendard'; ctx.fillText(lb, padL + 2, y(p) - 4);
+      });
+    }
+    if (bands) {
+      ctx.beginPath(); let st = false;
+      for (let k = 0; k < vis.length; k++) { const u = bands.up[i0 + k]; if (u == null) continue; if (!st) { ctx.moveTo(x(k), y(u)); st = true; } else ctx.lineTo(x(k), y(u)); }
+      for (let k = vis.length - 1; k >= 0; k--) { const l = bands.lo[i0 + k]; if (l == null) continue; ctx.lineTo(x(k), y(l)); }
+      ctx.closePath(); ctx.fillStyle = 'rgba(15,163,154,0.07)'; ctx.fill();
+      [['up', '#0FA39A'], ['lo', '#0FA39A'], ['m', '#C9A23A']].forEach(([key, col]) => { ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); let s2 = false; for (let k = 0; k < vis.length; k++) { const val = bands[key][i0 + k]; if (val == null) continue; const px = x(k), py = y(val); if (!s2) { ctx.moveTo(px, py); s2 = true; } else ctx.lineTo(px, py); } ctx.stroke(); });
+    }
+    if (this.state.sel != null && this.state.sel >= i0 && this.state.sel < i1) {
+      const k = this.state.sel - i0; ctx.fillStyle = 'rgba(15,163,154,0.14)'; ctx.fillRect(padL + k * cw, padT, cw, priceH);
+      ctx.strokeStyle = '#0FA39A'; ctx.lineWidth = 1.2; ctx.strokeRect(padL + k * cw + 0.5, padT, cw - 1, priceH);
+    }
+
+    const bw = Math.max(1.5, cw * 0.6);
+    vis.forEach((d, k) => {
+      const up = d.c >= d.o, col = up ? '#E14B43' : '#3A6DE8';
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x(k), y(d.h)); ctx.lineTo(x(k), y(d.l)); ctx.stroke();
+      const yo = y(d.o), yc = y(d.c), top = Math.min(yo, yc), hgt = Math.max(1.4, Math.abs(yo - yc));
+      ctx.fillRect(x(k) - bw / 2, top, bw, hgt);
+    });
+    if (mas) mas.forEach(m => { ctx.strokeStyle = m.col; ctx.lineWidth = 1.5; ctx.beginPath(); let s2 = false; for (let k = 0; k < vis.length; k++) { const val = m.arr[i0 + k]; if (val == null) continue; const px = x(k), py = y(val); if (!s2) { ctx.moveTo(px, py); s2 = true; } else ctx.lineTo(px, py); } ctx.stroke(); });
+
+    if (ind === '거래량') {
+      const vmax = Math.max(...vis.map(d => d.v));
+      vis.forEach((d, k) => { ctx.fillStyle = d.c >= d.o ? 'rgba(225,75,67,0.55)' : 'rgba(58,109,232,0.55)'; const bh = (d.v / vmax) * subH; ctx.fillRect(x(k) - bw / 2, subY + subH - bh, bw, bh); });
+      ctx.fillStyle = '#A39D8E'; ctx.font = '600 10px Pretendard'; ctx.fillText('거래량', padL + 2, subY + 10);
+    }
+    if (ind === 'RSI') {
+      const ry = p => subY + subH - (p / 100) * subH;
+      ctx.strokeStyle = '#EFE7D8'; ctx.setLineDash([4, 3]); [30, 70].forEach(lv => { ctx.beginPath(); ctx.moveTo(padL, ry(lv)); ctx.lineTo(W - padR, ry(lv)); ctx.stroke(); }); ctx.setLineDash([]);
+      ctx.strokeStyle = '#9A7BD0'; ctx.lineWidth = 1.5; ctx.beginPath(); let s2 = false; for (let k = 0; k < vis.length; k++) { const val = rsiArr[i0 + k]; if (val == null) continue; const px = x(k), py = ry(val); if (!s2) { ctx.moveTo(px, py); s2 = true; } else ctx.lineTo(px, py); } ctx.stroke();
+      ctx.fillStyle = '#A39D8E'; ctx.font = '600 10px Pretendard'; ctx.fillText('RSI 14', padL + 2, subY + 10);
+    }
+
+    // signal number markers (on top)
+    sig.forEach(ev => {
+      if (ev.idx < i0 || ev.idx >= i1) return;
+      const k = ev.idx - i0, cx = x(k), cy = Math.max(padT + 11, y(c[ev.idx].h) - 15);
+      ctx.fillStyle = '#0FA39A'; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '700 11px Space Grotesk, Pretendard'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(ev.n), cx, cy + 0.5); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+    });
+  }
+
+  // ---- navigation ----
+  nav(file) { window.location.href = encodeURI(file); }
+
+  // ---- portfolio / trade ----
+  loadPort() {
+    try { const p = JSON.parse(localStorage.getItem('sttak_port') || 'null'); if (p) { this.hold = p.hold; this.avg = p.avg; this.cash = p.cash; } } catch (e) {}
+    try { this.trades = JSON.parse(localStorage.getItem('sttak_trades') || '[]'); } catch (e) { this.trades = []; }
+    if (this.hold == null) { this.hold = 0; this.avg = 0; this.cash = 10000000; this.trades = []; }
+  }
+  savePort() { try { localStorage.setItem('sttak_port', JSON.stringify({ hold: this.hold, avg: this.avg, cash: this.cash })); localStorage.setItem('sttak_trades', JSON.stringify(this.trades)); } catch (e) {} }
+  nowStr() { const d = new Date(); return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0'); }
+
+  openBuy() { const st = this.stocks[this.state.stock]; const maxAff = Math.floor(this.cash / st.price); this.setState({ sheet: 'buy', qty: Math.max(1, Math.min(10, maxAff)), reason: '' }); }
+  openSell() { if (this.hold <= 0) return this.flash('아직 보유한 수량이 없어요'); this.setState({ sheet: 'sell', qty: Math.min(10, this.hold), reason: '' }); }
+  closeSheet() { this.setState({ sheet: null }); }
+  setQty(n) { const st = this.stocks[this.state.stock]; const cap = this.state.sheet === 'sell' ? this.hold : Math.max(1, Math.floor(this.cash / st.price)); this.setState({ qty: Math.max(1, Math.min(cap, n)) }); }
+  setReason(v) { this.setState({ reason: v.slice(0, 140) }); }
+
+  execute() {
+    const S = this.state, st = this.stocks[S.stock], price = st.price, qty = S.qty;
+    if (!S.reason.trim()) return this.flash('매매 근거를 적어 주세요');
+    if (S.sheet === 'buy') {
+      const cost = qty * price;
+      if (cost > this.cash) return this.flash('투자 가능 금액을 초과했어요');
+      const nhold = this.hold + qty;
+      this.avg = Math.round((this.avg * this.hold + price * qty) / nhold);
+      this.hold = nhold; this.cash -= cost;
+      this.trades.unshift({ type: '매수', name: st.name, code: st.code, qty, price, reason: S.reason.trim(), date: this.nowStr(), ts: Date.now() });
+      this.savePort();
+      this.setState({ sheet: null, reason: '' });
+      this.flash(qty + '주 모의 매수 완료');
+    } else {
+      const proceeds = qty * price, avg = this.avg;
+      const pnl = Math.round((price - avg) * qty), pnlPct = avg ? (price - avg) / avg * 100 : 0;
+      const nhold = this.hold - qty, partial = nhold > 0;
+      this.hold = nhold; this.cash += proceeds; if (nhold === 0) this.avg = 0;
+      const trade = { type: '매도', name: st.name, code: st.code, qty, price, reason: S.reason.trim(), pnl, pnlPct, avgAtSell: avg, partial, date: this.nowStr() };
+      const retro = this.buildRetro(trade); trade.retro = retro; trade.ts = Date.now();
+      this.trades.unshift(trade); this.savePort();
+      this.setState({ sheet: null, reason: '', retro, retroFollow: false });
+    }
+  }
+
+  buildRetro(t) {
+    const win = t.pnl >= 0;
+    const good = ['매매 전에 이유를 적어 둔 점이 좋아요. 막연한 감이 아니라 근거를 남겼어요.'];
+    if (win) good.push('수익을 실현해 계획을 행동으로 옮겼어요. 이익을 지키는 것도 중요한 연습이에요.');
+    else good.push('손실을 키우지 않고 정리한 것도 하나의 선택이에요. 다음 판단을 위한 여유를 남겼어요.');
+    const watch = [];
+    if (t.partial) watch.push('일부만 매도했어요. 남은 수량의 계획도 함께 세워 두면 좋아요.');
+    watch.push('매도 전에 거래량·이동평균선 흐름도 같이 봤다면 판단이 더 단단했을 거예요.');
+    watch.push('근거에 적은 기대가 실제로 맞았는지 한 달 뒤에 다시 비교해 보세요.');
+    let h = 0; const key = t.code + t.date + t.qty; for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) & 0xffff;
+    const f = ((h % 1000) / 1000 - 0.42) * 0.22;
+    const futPrice = Math.round(t.price * (1 + f) / 10) * 10;
+    const diffPct = (futPrice - t.price) / t.price * 100;
+    return { qty: t.qty, price: t.price, pnl: t.pnl, pnlPct: t.pnlPct, reason: t.reason, partial: t.partial, good, watch, futPrice, diffPct };
+  }
+  closeRetro() { this.setState({ retro: null }); }
+  toggleFollow() { this.setState(s => ({ retroFollow: !s.retroFollow })); }
+
+  renderVals() {
+    const S = this.state, st = this.stocks[S.stock], fmt = n => n.toLocaleString('ko-KR');
+    const chips = this.stocks.map((s, i) => { const on = i === S.stock; return { name: s.name, bg: on ? '#0FA39A' : '#FFFFFF', color: on ? '#FFFFFF' : '#46443D', sh: on ? 'none' : '0 1px 3px rgba(40,36,28,0.06)', onSelect: () => this.setStock(i) }; });
+    const periods = ['1일', '1주', '1개월', '3개월', '1년'].map(p => { const on = p === S.period; return { label: p, bg: on ? '#FFFFFF' : 'transparent', color: on ? '#0E7E77' : '#9A9485', sh: on ? '0 1px 2px rgba(40,36,28,0.12)' : 'none', onSelect: () => this.setPeriod(p) }; });
+    const defs = [['정보', '#8A8478'], ['지지·저항', '#3A6DE8'], ['이동평균선', '#E0A33A'], ['RSI', '#9A7BD0'], ['거래량', '#E14B43'], ['볼린저밴드', '#0FA39A']];
+    const indicators = defs.map(([k, dot]) => { const on = S.indicator === k; return { label: k, dot, bg: on ? '#26241F' : '#FFFFFF', color: on ? '#FFFFFF' : '#46443D', sh: on ? 'none' : '0 1px 3px rgba(40,36,28,0.06)', onSelect: () => this.setIndicator(k) }; });
+
+    const text = {
+      '정보': { title: '정보 · 회사의 몸값', body: '시가총액은 회사 전체의 몸값, PER은 이익 대비, PBR은 자산 대비 주가가 비싼지를 보는 숫자예요. 낮을수록 \u2018싸다\u2019고 보지만 업종마다 기준이 달라요.' },
+      '지지·저항': { title: '지지·저항 · 바닥과 천장', body: '지지선은 가격이 잘 안 내려가는 바닥, 저항선은 잘 못 넘는 천장이에요. 자주 부딪힌 가격일수록 의미가 커요.' },
+      '이동평균선': { title: '이동평균선 · 추세', body: '최근 며칠 종가의 평균을 이은 선이에요. 짧은 선(5일)이 긴 선(20일)을 위로 뚫는 \u2018골든크로스\u2019는 상승 전환 신호로 자주 봐요. 선 위에 가격이 있으면 흐름이 \u2018위쪽\u2019이에요.' },
+      'RSI': { title: 'RSI · 과열과 침체', body: '최근 상승·하락 힘을 0~100으로 나타내요. 70 위는 과열(비쌀 수 있음), 30 아래는 과매도(쌀 수 있음)로 읽어요.' },
+      '거래량': { title: '거래량 · 관심의 크기', body: '하루에 얼마나 거래됐는지예요. 가격이 오를 때 거래량도 함께 늘면 관심이 실린 상승으로 봐요.' },
+      '볼린저밴드': { title: '볼린저밴드 · 변동폭 띠', body: '평균선 위아래로 변동폭만큼 띠를 그린 거예요. 위 띠에 닿으면 단기 과열, 아래 띠에 닿으면 단기 과매도로 봐요.' }
+    };
+    const dflt = { title: 'sttak 차트 코치', body: '아래 용어를 누르면, 과거에 그 신호가 나타났던 구간을 차트에 색칠해 표시하고 그 뒤 흐름을 함께 보여드려요. 숫자보다 \u2018흐름\u2019을 먼저 익혀 보세요.' };
+    const ci = text[S.indicator] || dflt;
+    const events = this.computeSignals(S.indicator);
+    this._signals = events;
+    const evRows = events.map(e => ({ n: e.n, label: (e.daysAgo <= 1 ? '최근' : e.daysAgo + '일 전') + ' · ' + e.kind, dirLabel: e.dirLabel, dirColor: e.dirColor, pctStr: e.pctStr, onFocus: () => this.focusEvent(e.idx) }));
+    const curRead = this.currentRead(S.indicator);
+    const coach = {
+      title: ci.title, body: ci.body,
+      explOpen: S.explOpen, toggleLabel: S.explOpen ? '설명 숨기기' : '설명 보기',
+      hasInfo: S.indicator === '정보', cap: st.cap, per: st.per, pbr: st.pbr,
+      hasCur: !!curRead, curRead,
+      hasEvents: events.length > 0, events: evRows,
+      caveat: events.length > 0 ? '신호가 항상 맞는 건 아니에요. \u2018당시엔 이런 흐름이 있었다\u2019는 참고로 봐 주세요.' : ''
+    };
+
+    const hasSel = S.sel != null, signalsExist = events.length > 0, selDate = S.sel != null ? (240 - S.sel) : 0;
+    const selEv = events.find(e => e.idx === S.sel);
+    const detail = selEv ? this.eventDetail(selEv) : null;
+
+    const price = st.price;
+    let sheetVM = null;
+    if (S.sheet) {
+      const isBuy = S.sheet === 'buy';
+      const accent = isBuy ? '#E14B43' : '#3A6DE8';
+      const cap = isBuy ? Math.max(1, Math.floor(this.cash / price)) : this.hold;
+      const quickArr = isBuy
+        ? ['뉴스 호재가 실적으로 이어질 것 같아서', '차트가 골든크로스라 상승 전환 기대', '거래량이 늘어 관심이 가서']
+        : ['목표한 수익에 도달해서', '흐름이 꺾이는 것 같아서', '다른 종목에 투자하려고'];
+      const canExec = !!S.reason.trim();
+      sheetVM = {
+        isBuy, title: st.name + (isBuy ? ' 모의 매수' : ' 모의 매도'),
+        qty: S.qty, priceStr: fmt(price), totalStr: fmt(S.qty * price),
+        capLabel: isBuy ? ('최대 ' + fmt(cap) + '주') : ('보유 ' + fmt(cap) + '주'),
+        presets: [5, 10, 20].map(n => ({ label: n + '주', bg: S.qty === n ? accent : '#FFFFFF', color: S.qty === n ? '#FFFFFF' : '#46443D', onSelect: () => this.setQty(n) })),
+        quick: quickArr.map(q => ({ text: q, onPick: () => this.setState({ reason: q }) })),
+        reason: S.reason, len: S.reason.length,
+        execLabel: canExec ? (S.qty + '주 ' + (isBuy ? '매수하기' : '매도하기')) : '근거를 적어 주세요',
+        execBg: canExec ? accent : '#EFEBE2', execColor: canExec ? '#FFFFFF' : '#B6B0A2'
+      };
+    }
+    const Rt = S.retro;
+    let retroVM = null;
+    if (Rt) {
+      retroVM = {
+        partial: Rt.partial,
+        sumLine: Rt.qty + '주 · ' + fmt(Rt.price) + '원에 매도',
+        pnlStr: (Rt.pnl >= 0 ? '+' : '') + fmt(Rt.pnl) + '원',
+        pnlPctStr: (Rt.pnlPct >= 0 ? '+' : '') + Rt.pnlPct.toFixed(1) + '%',
+        pnlColor: Rt.pnl >= 0 ? '#E14B43' : '#3A6DE8',
+        reason: Rt.reason, good: Rt.good, watch: Rt.watch,
+        follow: S.retroFollow, notFollow: !S.retroFollow,
+        futStr: fmt(Rt.futPrice), diffStr: (Rt.diffPct >= 0 ? '+' : '') + Rt.diffPct.toFixed(1) + '%',
+        diffColor: Rt.diffPct >= 0 ? '#E14B43' : '#3A6DE8',
+        followText: Rt.diffPct >= 0
+          ? '한 달 뒤엔 매도가보다 더 올랐어요. 더 가져갔다면 좋았겠지만, 그때 정보로는 충분히 합리적인 선택이었어요. ‘더 보유할지’는 늘 어려운 판단이에요.'
+          : '한 달 뒤엔 매도가보다 더 내렸어요. 그 시점에 정리한 판단이 결과적으로 손실을 줄였네요. 매번 이렇게 맞지는 않으니, 근거를 남기는 습관이 가장 큰 자산이에요.'
+      };
+    }
+    return {
+      stock: { name: st.name, code: st.code, priceStr: fmt(st.price), chgStr: (st.chg >= 0 ? '+' : '') + st.chg.toFixed(2) + '% ' + (st.chg >= 0 ? '\u25B2' : '\u25BC'), chgColor: st.chg >= 0 ? '#E14B43' : '#3A6DE8' },
+      chips, periods, indicators, coach,
+      toggleExpl: () => this.toggleExpl(),
+      showDetail: !!selEv, detail, showAsk: hasSel && !selEv, showSignalHint: !hasSel && signalsExist, showPlainHint: !hasSel && !signalsExist,
+      selLabel: selDate <= 1 ? '최근' : (selDate + '일 전'),
+      askSel: () => this.flash('선택한 구간을 AI가 분석해 쉽게 설명해 드릴게요'),
+      openAI: () => this.flash('AI 차트 코치에게 자유롭게 물어보세요'),
+      holdShares: fmt(this.hold), cashStr: fmt(this.cash),
+      tradeRLabel: this.hold > 0 ? '평균 단가' : '투자 가능', tradeRVal: this.hold > 0 ? fmt(this.avg) : fmt(this.cash),
+      openBuy: () => this.openBuy(), openSell: () => this.openSell(),
+      navHome: () => this.nav('sttak Home.dc.html'), navQuiz: () => this.nav('sttak 퀴즈.dc.html'), navMy: () => this.nav('sttak 마이.dc.html'),
+      sheetOpen: !!S.sheet, sheet: sheetVM, closeSheet: () => this.closeSheet(),
+      setReason: e => this.setReason(e.target.value), dec: () => this.setQty(S.qty - 1), inc: () => this.setQty(S.qty + 1), exec: () => this.execute(),
+      retroOpen: !!S.retro, retro: retroVM, closeRetro: () => this.closeRetro(), toggleFollow: () => this.toggleFollow(),
+      toast: S.toast, hasToast: !!S.toast,
+      onDown: e => this.onDown(e), onMove: e => this.onMove(e), onUp: e => this.onUp(e), onWheel: e => this.onWheel(e)
+    };
+  }
+}
+</script>
+</body>
+</html>
