@@ -7,16 +7,90 @@ import SwiftUI
 // 미리보기 갤러리. 프로덕션 빌드(release)에는 포함되지 않는다.
 // Xcode 에서 이 파일을 열고 Canvas(⌥⌘↩) 의 Preview 로 확인한다.
 struct DesignSystemGalleryView: View {
+    @SwiftUI.State private var segInk = 0
+    @SwiftUI.State private var segAccent = 0
+    @SwiftUI.State private var sheetPresented = false
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.sectionGap) {
                 logoSection
                 colorSection
                 typographySection
+                componentsSection
             }
             .padding(AppSpacing.screenHorizontal)
         }
         .background(AppColor.backgroundPrimary.ignoresSafeArea())
+        .bottomSheet(isPresented: $sheetPresented) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
+                HStack {
+                    Badge("호재", kind: .positive)
+                    Text("뉴스 상세 시트")
+                        .font(AppFont.focusCardTitle)
+                        .foregroundStyle(AppColor.ink)
+                }
+                Text("BottomSheet 컴포넌트 — 스크림을 탭하면 닫혀요.")
+                    .font(AppFont.body)
+                    .foregroundStyle(AppColor.textMuted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(AppSpacing.cardPadding)
+            .padding(.bottom, AppSpacing.xxl)
+        }
+    }
+
+    // MARK: 컴포넌트
+
+    private var componentsSection: some View {
+        sectionCard("Components") {
+            // Badge — 감정 3색
+            label("Badge — 감정 3색")
+            HStack(spacing: AppSpacing.sm) {
+                Badge("호재", kind: .positive)
+                Badge("중립", kind: .neutral)
+                Badge("악재", kind: .negative)
+            }
+
+            // PrimaryButton — 활성/비활성/로딩
+            label("PrimaryButton — 활성 / 비활성 / 로딩")
+            VStack(spacing: AppSpacing.sm) {
+                PrimaryButton("3개 담고 시작하기", state: .enabled) {}
+                PrimaryButton("관심종목을 골라주세요", state: .disabled) {}
+                PrimaryButton("불러오는 중", state: .loading) {}
+            }
+
+            // SegmentedControl — ink / accent 스타일 (선택/미선택)
+            label("SegmentedControl — ink / accent")
+            VStack(spacing: AppSpacing.sm) {
+                SegmentedControl(["쉬운풀이", "원문", "AI에게 묻기"], selection: $segInk, style: .ink)
+                SegmentedControl(["신규 유저", "기존 유저"], selection: $segAccent, style: .accent)
+            }
+
+            // Pill — 전 프리셋
+            label("Pill — 프리셋")
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                Pill("이게 왜 중요한가요?", style: .accentSoft)
+                HStack(spacing: AppSpacing.sm) {
+                    Pill("3/5", style: .accentSelected)
+                    Pill("0/5", style: .neutralOutline)
+                    Pill("반도체", style: .neutral)
+                }
+                Pill("보유 자산 1,000만원", style: .surface)
+                Pill("최대 5개까지 담을 수 있어요", style: .dark)
+            }
+
+            // BottomSheet — 트리거
+            label("BottomSheet")
+            PrimaryButton("뉴스 상세 시트 열기") { sheetPresented = true }
+        }
+    }
+
+    private func label(_ text: String) -> some View {
+        Text(text)
+            .font(AppFont.metaCaption)
+            .foregroundStyle(AppColor.textMuted)
+            .padding(.top, AppSpacing.xs)
     }
 
     // MARK: 로고

@@ -27,9 +27,11 @@ enum AppRadius {
     static let chipSmall: CGFloat = 10  // 칩/세그먼트 (작은)
     static let chip: CGFloat = 12       // 칩/세그먼트
     static let row: CGFloat = 14        // 리스트 행/옵션
+    static let badge: CGFloat = 7       // 감정 배지(작은 라운드 사각, pill 아님 — 핸드오프 6~7)
     static let card: CGFloat = 16       // 카드 (최빈)
     static let cardLarge: CGFloat = 18  // 카드 변형
     static let banner: CGFloat = 20     // 큰 카드/배너
+    static let sheet: CGFloat = 28      // 바텀시트 상단 모서리
     static let screen: CGFloat = 45     // iOS 화면 프레임(참고)
     static let pill: CGFloat = 999      // 배지/필
 }
@@ -52,6 +54,10 @@ enum AppShadow {
     static let chip = ShadowToken(color: Color(rgb: 0x28241C, opacity: 0.05), radius: 2, x: 0, y: 1)
     /// 틸 CTA(프라이머리 버튼만): 0 6px 18px rgba(15,163,154,0.30)
     static let accentCTA = ShadowToken(color: Color(rgb: 0x0FA39A, opacity: 0.30), radius: 18, x: 0, y: 6)
+    /// Segment 선택 칩: 0 1px 3px rgba(40,36,28,0.12)
+    static let segmentSelected = ShadowToken(color: Color(rgb: 0x28241C, opacity: 0.12), radius: 3, x: 0, y: 1)
+    /// 바텀시트: 0 -10px 40px rgba(40,36,28,0.18)
+    static let sheet = ShadowToken(color: Color(rgb: 0x28241C, opacity: 0.18), radius: 40, x: 0, y: -10)
 }
 
 extension View {

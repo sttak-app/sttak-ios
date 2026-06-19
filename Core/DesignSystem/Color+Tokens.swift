@@ -87,4 +87,13 @@ enum AppColor {
     static let leagueGold = Color(rgb: 0xE0B43C)
     static let leaguePlatinum = Color(rgb: 0x46C2B6)
     static let leagueDiamond = Color(rgb: 0x6FA0F2)
+
+    // ── 공용 컴포넌트 상태 토큰 (핸드오프 실측, 커밋 4에서 추가) ──
+    static let ctaDisabledBackground = Color(rgb: 0xE5E0D6) // PrimaryButton 비활성 배경
+    static let ctaDisabledForeground = Color(rgb: 0xB3AC9D) // PrimaryButton 비활성 텍스트
+    static let segmentTrack = Color(rgb: 0xEDE9E0)          // Segment 트랙(컨테이너) 배경
+    static let segmentUnselectedText = Color(rgb: 0x9A9485) // Segment 미선택 텍스트
+    static let controlBorder = Color(rgb: 0xE4DFD4)         // Pill/Segment 비활성 보더
+    static let accentTintSoft = Color(rgb: 0xEEF4F2)        // 더 옅은 틸 틴트(빠른질문 Pill)
+    static let scrim = Color(rgb: 0x14120E, opacity: 0.42)  // 바텀시트 딤(스크림)
 }
