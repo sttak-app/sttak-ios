@@ -13,6 +13,8 @@ xcuserdata/
 # project.yml 이 단일 진실원. 생성물 .xcodeproj 는 추적하지 않는다.
 # (클론 후 `brew install xcodegen && xcodegen generate` 로 생성)
 *.xcodeproj/
+# XcodeGen 이 생성하는 Info.plist (project.yml 이 SSOT)
+App/Info.plist
 
 # ───────── Build artifacts ─────────
 DerivedData/
