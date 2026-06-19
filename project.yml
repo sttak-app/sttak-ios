@@ -24,9 +24,10 @@ targets:
   sttak:
     type: application
     platform: iOS
-    # MVP 진행에 따라 Core/Domain/Data/Features/Resources 폴더를 아래에 추가 등록한다.
+    # MVP 진행에 따라 Domain/Data/Features/Resources 폴더를 아래에 추가 등록한다.
     sources:
       - path: App
+      - path: Core
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.sttak.app
