@@ -24,10 +24,11 @@ targets:
   sttak:
     type: application
     platform: iOS
-    # MVP 진행에 따라 Domain/Data/Features 폴더를 아래에 추가 등록한다.
+    # MVP 진행에 따라 Data/Features 폴더를 아래에 추가 등록한다.
     sources:
       - path: App
       - path: Core
+      - path: Domain
       - path: Resources/Fonts
         excludes:
           - "README.md"   # 문서는 번들에 넣지 않음 (폰트/라이선스만 번들)
