@@ -23,4 +23,8 @@ struct MockPortfolioRepository: PortfolioRepository {
     func fetchTrades() async throws -> [Trade] {
         await store.allTrades()
     }
+
+    func creditCash(_ amount: Money) async throws {
+        await store.addCapital(amount.amount)
+    }
 }

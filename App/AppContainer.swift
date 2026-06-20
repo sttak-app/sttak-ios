@@ -67,6 +67,15 @@ final class AppContainer: Sendable {
     }
 
     @MainActor
+    func makeQuizViewModel() -> QuizViewModel {
+        QuizViewModel(
+            score: ScoreQuizAndAwardCapital(portfolio: portfolio, quiz: quiz),
+            quiz: quiz,
+            portfolio: portfolio
+        )
+    }
+
+    @MainActor
     func makeChartLearningViewModel() -> ChartLearningViewModel {
         ChartLearningViewModel(auth: auth, marketData: marketData, portfolioRepo: portfolio)
     }

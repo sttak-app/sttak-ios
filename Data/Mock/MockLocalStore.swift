@@ -5,15 +5,14 @@ import Foundation
 /// 생성은 부작용 없음(인메모리). AppContainer 와이어링은 커밋 9.
 actor MockLocalStore {
     private(set) var user: User?
-    private(set) var cash: Int                 // KRW
+    private(set) var cash: Int                 // KRW (단일 통화 = 모의투자 자본금)
     private(set) var holdings: [Holding]
-    private(set) var points: Int
     private(set) var trades: [Trade]
     private(set) var quizLastTakenAt: Date?
+    private(set) var lastQuizCompletion: QuizCompletion?
 
-    init(cash: Int = MockData.initialCash, points: Int = MockData.initialPoints) {
+    init(cash: Int = MockData.initialCash) {
         self.cash = cash
-        self.points = points
         self.holdings = []
         self.trades = []
         self.user = nil
@@ -64,11 +63,21 @@ actor MockLocalStore {
         return trade
     }
 
-    // MARK: 퀴즈/포인트
+    // MARK: 퀴즈/자본금
     func addCapital(_ amount: Int) { cash += amount }
-    func addPoints(_ amount: Int) { points += amount }
-    func currentPoints() -> Int { points }
-    func markQuizTaken(at date: Date) { quizLastTakenAt = date }
+
+    /// 퀴즈 결과 기록(쿨다운 + 지난 세트 보관). 자본금 적립은 별도(creditCash).
+    func recordQuizResult(correctCount: Int, earnedCapital: Money, takenAt: Date) {
+        quizLastTakenAt = takenAt
+        lastQuizCompletion = QuizCompletion(takenAt: takenAt, correctCount: correctCount, earnedCapital: earnedCapital)
+    }
+
+    #if DEBUG
+    func clearQuizCooldown() {
+        quizLastTakenAt = nil
+        lastQuizCompletion = nil
+    }
+    #endif
 
     // MARK: 내부
     private func applyBuy(stockCode: String, quantity: Int, price: Money) {

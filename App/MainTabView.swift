@@ -17,7 +17,9 @@ struct MainTabView: View {
             ChartLearningView()
                 .tabItem { Label("차트학습", systemImage: "chart.xyaxis.line") }
                 .tag(Tab.chart)
-            tab(.quiz, title: "퀴즈", systemImage: "checkmark.circle")
+            QuizView(onGoToChart: { selection = .chart }, onGoToRanking: { selection = .my })
+                .tabItem { Label("퀴즈", systemImage: "checkmark.circle") }
+                .tag(Tab.quiz)
             tab(.my, title: "마이", systemImage: "person")
         }
         .tint(AppColor.accent)

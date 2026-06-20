@@ -6,10 +6,7 @@ import Foundation
 enum MockData {
 
     // MARK: 상수
-    static let initialCash = 10_000_000          // sttak_port 초기 cash
-    static let initialPoints = 1_240             // sttak_points 기본값
-    static let quizReward = 500_000              // 정답 1문제당 자본금(REWARD)
-    static let quizPointsPerCorrect = 50         // 정답 1문제당 포인트
+    static let initialCash = 10_000_000          // 초기 모의투자 자본금(단일 통화)
 
     // MARK: 종목 유니버스 (Prototype 온보딩 리스트, 깨진 항목 제외)
     /// (code, name, market, price, changePercent)
@@ -147,22 +144,10 @@ enum MockData {
         ),
     ]
 
-    // MARK: 랭킹 (sttak 랭킹.dc.html)
+    // MARK: 랭킹 — 보유 자산 단일 리더보드 (제품 결정: 포인트 랭킹·League 미사용)
     static let rankingNames = ["우상향중", "복리요정", "존버의신", "가치투자가", "차트마스터", "꾸준왕", "배당모으기", "분할매수러", "퀀트입문", "월급방어전", "단타졸업생", "관심종목왕"]
     static let rankingChanges = [1, -1, 2, 0, 1, -2, 3, 0, 1, -1, 2, 0]
     static let rankingAssetTop = [16_420_000, 15_880_000, 15_210_000, 14_760_000, 14_300_000, 13_950_000, 13_510_000, 13_200_000, 12_940_000, 12_610_000, 12_330_000, 12_080_000]
-    static let rankingPointTop = [9_240, 8_710, 8_330, 7_950, 7_420, 7_010, 6_680, 6_240, 5_870, 5_510, 5_180, 4_920]
-
-    /// 포인트 → 리그 임계값. (브론즈 0–500, 실버 500–1000, 골드 1000–2000, 플래티넘 2000–3500, 다이아 3500+)
-    static func league(forPoints points: Int) -> League {
-        switch points {
-        case ..<500: return .bronze
-        case ..<1_000: return .silver
-        case ..<2_000: return .gold
-        case ..<3_500: return .platinum
-        default: return .diamond
-        }
-    }
 
     // MARK: 내부 — 섹터(뉴스 보유 종목만 핸드오프에 명시, 나머지는 빈 문자열)
     private static func sector(for code: String) -> String {

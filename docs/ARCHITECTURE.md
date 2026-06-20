@@ -40,7 +40,7 @@
 - **Retrospective** — 한 매도 건에 종속된 AI 회고(직후 회고 + 한 달 후 후속 회고).
 - **QuizSet** — 6시간 주기로 생성되는 3문제 세트(응시 시각·정답수·적립 자본금).
 - **ChatSession** — 뉴스/구간/자유 질문 컨텍스트의 챗봇 대화.
-- **RankingSnapshot** — 시점별 랭킹 목록(서버 산출).
+- **RankingSnapshot** — 시점별 랭킹 목록(서버 산출, **보유 자산 단일 리더보드**).
 
 ### 1.2 Value Object (식별자 없는 불변 값)
 
@@ -53,8 +53,8 @@
 - **IndicatorKind** — `정보 / 지지저항 / 이동평균 / RSI / 거래량 / 볼린저밴드`.
 - **ChartSignal** — `kind(골든크로스/데드크로스/RSI과열/과매도/볼린저 상·하단 터치), index, 설명문, 이후 N일 방향`.
 - **QuizQuestion** — `question, options[4], answerIndex, explanation, category`.
-- **League** — `브론즈 / 실버 / 골드 / 플래티넘 / 다이아` (포인트 임계값으로 산출).
 - **TradeRationale** — 근거 텍스트(≤140자) + 빠른선택 프리셋.
+- *(제거됨: League — 제품 결정으로 등급/포인트 미사용. 부록 B 참고.)*
 
 ### 1.3 UseCase 후보 (한 줄로 표현되는 동작 단위)
 
@@ -73,8 +73,8 @@
 | `GenerateSellRetrospective` | **서버(LLM)** | 매도 직후 회고(잘한 점/함께 볼 점) |
 | `GenerateFollowUpRetro` | **서버(LLM)** | 한 달 뒤 실제가 비교 후속 회고 |
 | `GenerateQuizSet` | **서버(LLM, 배치)** | 6시간 주기 생성 |
-| `ScoreQuizAndAwardCapital` ★ | 클라(도메인) | 정답수 → +50만/문항, 포인트 +50, 쿨다운 |
-| `ComputeRanking` | **서버** | 자산/포인트 랭킹·리그·변동 |
+| `ScoreQuizAndAwardCapital` ★ | 클라(도메인) | 정답수 → +50만/문항(자본금만), 6h 쿨다운 |
+| `ComputeRanking` | **서버** | 보유 자산 랭킹·변동 |
 
 → "★ = 온디바이스 순수 로직"은 키가 필요 없고 단위 테스트가 쉬움. "서버(LLM)"는
 전부 §3에서 다루는 **백엔드 경유 + protocol 추상화** 대상입니다.
@@ -240,7 +240,7 @@ ROI 순으로, 1인이 **유지 가능한 만큼만**:
 1. **Domain/Indicators (최우선, 단위테스트)** — MA/RSI/볼린저 수치, 골든·데드크로스/과열·과매도/밴드
    터치 신호 탐지. 입력 캔들 → 기대 신호 인덱스. (키·네트워크 0, 회귀 위험 큼 → 가성비 최고)
 2. **Domain/UseCases (단위)** — `ExecuteTrade`(근거 미입력 거부, cash/보유 갱신, 부분매도),
-   `ScoreQuizAndAwardCapital`(정답수→자본금/포인트, 6h 쿨다운), 손익/평가금액 계산, 리그 산출.
+   `ScoreQuizAndAwardCapital`(정답수→자본금, 6h 쿨다운), 손익/평가금액 계산.
 3. **Data (단위)** — DTO 디코딩(샘플 JSON), 도메인 매핑, **Mock과 Live의 인터페이스 동일성**.
 4. **ViewModel (단위, Mock repo)** — 핵심 상태 전이: loading→loaded→error, 온보딩 5개 상한,
    홈 스와이프 인덱스, 퀴즈 phase(playing→done→cooldown).
@@ -353,9 +353,9 @@ refactor(chart): 지표 계산을 Domain/Indicators로 분리
    (쉬운풀이/원문/AI 탭, AI는 Mock 스트리밍). *서버 없이 Mock 데이터로.*
 4. **차트학습(핵심 차별점 ②)**: 캔들차트(**Swift Charts 우선, `ChartRenderer` protocol**) → 지표 6종 + **온디바이스 신호 탐지**(테스트 동반)
    → 모의 매수/매도(근거 필수) → 매도 직후 회고(Mock).
-5. **퀴즈 + 자본금 연동**: 3문제·채점·해설·결과·6h 쿨다운 → 정답 시 자본금/포인트 적립.
+5. **퀴즈 + 자본금 연동**: 3문제·채점·해설·결과·6h 쿨다운 → 정답 시 자본금 적립(단일 통화).
 6. **마이페이지**: 자산·매매기록·회고기록(아코디언)·랭킹 진입.
-7. **랭킹**: 자산/포인트 토글·내 순위·리그(다른 유저는 **Mock**, 확정 C6).
+7. **랭킹**: 보유 자산 리더보드·내 순위(다른 유저는 **Mock**, 확정 C6).
 8. **후속 회고(한 달 뒤)**: Mock 단계는 **로컬 타이머 시뮬레이션**(Live는 서버 스케줄러+APNs, 확정 D8).
 9. **백엔드 연동(보류)**: OpenAPI 스펙 확정 후 Repository를 Live로 교체(뉴스 분류·챗봇·회고·퀴즈·시세·인증).
 
@@ -373,7 +373,7 @@ refactor(chart): 지표 계산을 Domain/Indicators로 분리
 2.  docs(arch): 아키텍처 설계안 추가              ← (이 문서)
 3.  feat(design): 디자인 토큰(Color/Typography/Spacing) + ReticleLogo
 4.  feat(design): 공용 컴포넌트(Badge/Segment/Pill/Sheet/PrimaryButton)
-5.  feat(domain): 엔티티/VO 정의(Stock·News·Portfolio·Trade·Quiz·League)
+5.  feat(domain): 엔티티/VO 정의(Stock·News·Portfolio·Trade·Quiz)
 6.  feat(domain): 지표 계산(MA/RSI/Bollinger) + 신호 탐지
 7.  test(domain): 지표·신호 단위 테스트
 8.  feat(data): Repository 프로토콜 + Mock 구현(sttak-data 이식)
@@ -385,10 +385,10 @@ refactor(chart): 지표 계산을 Domain/Indicators로 분리
 14. feat(chart): 지표 패널 + 과거 신호 시각화
 15. feat(chart): 모의 매수/매도(근거 필수) + 매도 직후 회고(Mock)
 16. test(domain): ExecuteTrade/포트폴리오 손익 테스트
-17. feat(quiz): 3문제·채점·해설·결과·쿨다운 + 자본금/포인트 적립
+17. feat(quiz): 3문제·채점·해설·결과·쿨다운 + 자본금 적립
 18. test(domain): 퀴즈 채점/쿨다운 테스트
 19. feat(my): 마이페이지(자산·매매기록·회고 아코디언·랭킹 진입)
-20. feat(ranking): 랭킹(자산/포인트 토글·리그·내 순위)
+20. feat(ranking): 랭킹(보유 자산·내 순위)
 21. feat(chat): 공용 챗봇 시트(Mock 스트리밍)
 22. feat(data): Live Repository 연동(OpenAPI 스펙 확정 후 — 보류)
 ```
@@ -426,6 +426,9 @@ refactor(chart): 지표 계산을 Domain/Indicators로 분리
 | D8 | 후속 회고 | **서버 스케줄러 + APNs 푸시**. Mock 단계는 로컬 시뮬레이션. |
 | E9 | 프로젝트 | **XcodeGen 채택**. |
 | E10 | 차트 | 렌더러를 **protocol로 분리**, **Swift Charts 우선**(추후 Canvas 교체 가능). |
+| F11 | 보상 통화 | **단일 통화 = 모의투자 자본금(원)**. 퀴즈 정답 보상은 자본금만(정답수×50만). **포인트(P) 미사용**. (프로토타입의 별도 포인트 통화는 의도적으로 안 따름) |
+| F12 | League | **미사용**(제거). 프로토타입은 포인트 임계로 등급을 매겼으나 포인트가 없어 등급 개념 제외. |
+| F13 | 랭킹 | **보유 자산 단일 리더보드**(프로토타입의 포인트 랭킹 모드 제외). |
 
 **작업 규칙(승인):** Mock-first로 §12 순서를 한 번에 하나씩 진행. **Live 연동(커밋 9의 Live 와이어링·22)은
 OpenAPI 스펙 확정까지 보류.** 각 커밋 완료 시 **빌드/실행 방법 + 변경 파일**을 설명하고 멈춤.

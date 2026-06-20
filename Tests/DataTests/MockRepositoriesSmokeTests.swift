@@ -63,34 +63,38 @@ final class MockRepositoriesSmokeTests: XCTestCase {
         }
     }
 
-    func testQuizSubmit_earnsCapitalIntoSharedPortfolio() async throws {
-        let store = MockLocalStore(cash: 10_000_000, points: 1_240)
+    func testQuizScore_creditsCapitalIntoSharedPortfolio() async throws {
+        let store = MockLocalStore(cash: 10_000_000)
         let portfolio = MockPortfolioRepository(store: store)
         let quiz = MockQuizRepository(store: store)
+        let score = ScoreQuizAndAwardCapital(portfolio: portfolio, quiz: quiz)
 
         let set = try await quiz.currentQuizSet()
         XCTAssertEqual(set.questions.count, 3)
 
-        let allCorrect = set.questions.map { $0.answerIndex }
-        let result = try await quiz.submit(quizSetID: set.id, selectedAnswers: allCorrect)
+        let allCorrect = set.questions.map(\.answerIndex)
+        let outcome = try await score(quizSet: set, selectedAnswers: allCorrect, now: Date(timeIntervalSince1970: 1_000))
 
-        XCTAssertEqual(result.correctCount, 3)
-        XCTAssertEqual(result.earnedCapital?.amount, 3 * 500_000)
+        XCTAssertEqual(outcome.correctCount, 3)
+        XCTAssertEqual(outcome.earnedCapital.amount, 3 * 500_000)
 
-        // 적립이 공유 store의 포트폴리오 현금에 반영된다.
+        // 자본금이 공유 store의 포트폴리오 현금에 반영 + 쿨다운 기록.
         let p = try await portfolio.fetchPortfolio()
         XCTAssertEqual(p.cash.amount, 10_000_000 + 1_500_000)
+        let last = try await quiz.lastCompletion()
+        XCTAssertEqual(last?.correctCount, 3)
     }
 
-    func testQuizSubmit_partialCorrect_earnsProportionally() async throws {
+    func testQuizScore_partialCorrect_earnsProportionally() async throws {
         let store = MockLocalStore()
         let quiz = MockQuizRepository(store: store)
+        let score = ScoreQuizAndAwardCapital(portfolio: MockPortfolioRepository(store: store), quiz: quiz)
         let set = try await quiz.currentQuizSet()
         // 첫 문제만 정답, 나머지 오답(정답이 0이므로 1을 제출).
         let answers = [set.questions[0].answerIndex, 1, 1]
-        let result = try await quiz.submit(quizSetID: set.id, selectedAnswers: answers)
-        XCTAssertEqual(result.correctCount, 1)
-        XCTAssertEqual(result.earnedCapital?.amount, 500_000)
+        let outcome = try await score(quizSet: set, selectedAnswers: answers, now: Date(timeIntervalSince1970: 1_000))
+        XCTAssertEqual(outcome.correctCount, 1)
+        XCTAssertEqual(outcome.earnedCapital.amount, 500_000)
     }
 
     func testAuthSignIn_persistsCurrentUser() async throws {

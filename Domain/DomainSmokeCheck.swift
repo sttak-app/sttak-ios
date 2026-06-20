@@ -33,14 +33,10 @@ private func _domainSmokeCheck() {
         explanation: "RSI 70↑은 단기 과열 구간으로 봅니다.",
         category: "차트·지표"
     )
-    _ = (League.gold > League.bronze)
     _ = TradeRationale(text: "뉴스가 긍정적으로 보여요")
     _ = Holding(stockCode: "005930", quantity: 10, averagePrice: .krw(70_000))
     _ = ChatMessage(role: .user, text: "이게 왜 중요한가요?", timestamp: Date())
-    _ = RankingEntry(
-        rank: 1, nickname: "투자초보", league: .diamond,
-        assetValue: .krw(12_300_000), points: 1_240, rankChange: 2, isCurrentUser: false
-    )
+    _ = RankingEntry(rank: 1, nickname: "투자초보", assetValue: .krw(12_300_000), rankChange: 2, isCurrentUser: false)
     _ = FollowUpRetrospective(evaluatedAt: Date(), priceAtFollowUp: .krw(75_000), comparisonText: "한 달 뒤 주가는 올랐어요.")
 
     // Entities
@@ -59,6 +55,6 @@ private func _domainSmokeCheck() {
     )
     _ = QuizSet(id: "q1", questions: [], takenAt: nil, correctCount: nil, earnedCapital: nil)
     _ = ChatSession(id: "c1", context: .news, messages: [])
-    _ = RankingSnapshot(id: "s1", mode: .asset, entries: [], updatedAt: Date())
+    _ = RankingSnapshot(id: "s1", entries: [], updatedAt: Date())
 }
 #endif

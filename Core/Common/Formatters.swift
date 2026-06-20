@@ -29,6 +29,12 @@ enum Formatters {
         return formatter.string(from: date)
     }
 
+    /// 카운트다운 HH:MM:SS (target까지 남은 시간, 음수는 00:00:00).
+    static func countdown(from now: Date, to target: Date) -> String {
+        let seconds = max(0, Int(target.timeIntervalSince(now)))
+        return String(format: "%02d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60)
+    }
+
     /// 상대 시각. 예: "방금", "32분 전", "3시간 전".
     static func relativeTime(_ date: Date, reference: Date) -> String {
         let seconds = max(0, reference.timeIntervalSince(date))

@@ -16,4 +16,6 @@ protocol PortfolioRepository: Sendable {
     ) async throws -> Trade
     /// 매매 기록 전체(최신순).
     func fetchTrades() async throws -> [Trade]
+    /// 비거래 현금 적립(퀴즈 보상 등). 매핑: 서버가 보상 트랜잭션으로 처리.
+    func creditCash(_ amount: Money) async throws
 }
