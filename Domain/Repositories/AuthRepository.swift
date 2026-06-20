@@ -7,6 +7,8 @@ protocol AuthRepository: Sendable {
     func signIn(with provider: AuthProvider) async throws -> User
     /// 현재 로그인 사용자(없으면 nil).
     func currentUser() async throws -> User?
+    /// 관심종목 갱신(온보딩 완료 등). 매핑: PATCH /me/watchlist.
+    func updateWatchlist(_ codes: [String]) async throws -> User
     /// 로그아웃.
     func signOut() async throws
 }

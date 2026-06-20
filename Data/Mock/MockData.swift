@@ -69,6 +69,9 @@ enum MockData {
         Stock(code: $0.code, name: $0.name, sector: sector(for: $0.code), market: $0.market, currency: .krw)
     }
 
+    /// 인기 종목 10(핸드오프 popularCodes 순서).
+    static let popularCodes = ["005930", "000660", "035420", "035720", "005380", "000270", "373220", "207940", "068270", "005490"]
+
     /// 시세 오버라이드 — sttak-data.js 정본(가격·등락·스파크). 나머지는 universe 값 사용.
     /// (code: price, change, sparkline)
     static let quoteOverrides: [String: (price: Int, change: Double, spark: [Double])] = [

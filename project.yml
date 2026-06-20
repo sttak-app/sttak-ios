@@ -30,6 +30,7 @@ targets:
       - path: Core
       - path: Domain
       - path: Data
+      - path: Features
       - path: Resources/Fonts
         excludes:
           - "README.md"   # 문서는 번들에 넣지 않음 (폰트/라이선스만 번들)

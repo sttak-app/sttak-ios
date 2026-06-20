@@ -46,6 +46,11 @@ final class AppContainer: Sendable {
     func makeRootViewModel() -> RootViewModel {
         RootViewModel(auth: auth)
     }
+
+    @MainActor
+    func makeOnboardingViewModel() -> OnboardingViewModel {
+        OnboardingViewModel(auth: auth, marketData: marketData)
+    }
 }
 
 // MARK: - Environment 주입

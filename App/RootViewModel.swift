@@ -36,10 +36,9 @@ final class RootViewModel {
         await resolveAuth()
     }
 
-    /// 로그인(목업) — 온보딩 placeholder에서 탭 셸로 넘어가 보기 위한 진입점.
-    func signInWithMock() async {
-        _ = try? await auth.signIn(with: .kakao)
-        await resolveAuth()
+    /// 온보딩(로그인+관심종목) 완료 → 메인으로.
+    func completeOnboarding() {
+        phase = .authenticated
     }
 
     private func resolveAuth() async {

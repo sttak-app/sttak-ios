@@ -11,7 +11,7 @@ struct RootView: View {
             case .none, .splash:
                 SplashView(onTap: { Task { await viewModel?.skipSplash() } })
             case .unauthenticated:
-                OnboardingPlaceholderView(onSignIn: { Task { await viewModel?.signInWithMock() } })
+                OnboardingFlowView(onComplete: { viewModel?.completeOnboarding() })
             case .authenticated:
                 MainTabView()
             }

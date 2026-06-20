@@ -33,6 +33,11 @@ struct MockMarketDataRepository: MarketDataRepository {
         return Array(matches.prefix(8))
     }
 
+    func fetchPopularStocks() async throws -> [Stock] {
+        let byCode = Dictionary(uniqueKeysWithValues: MockData.stocks.map { ($0.code, $0) })
+        return MockData.popularCodes.compactMap { byCode[$0] }
+    }
+
     // MARK: 내부
     private static func quote(for code: String) -> Quote? {
         if let override = MockData.quoteOverrides[code] {

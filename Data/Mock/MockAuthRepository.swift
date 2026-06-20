@@ -21,6 +21,18 @@ struct MockAuthRepository: AuthRepository {
         await store.user
     }
 
+    func updateWatchlist(_ codes: [String]) async throws -> User {
+        guard let current = await store.user else { throw RepositoryError.unauthorized }
+        let updated = User(
+            id: current.id,
+            authProvider: current.authProvider,
+            nickname: current.nickname,
+            watchlistCodes: codes
+        )
+        await store.setUser(updated)
+        return updated
+    }
+
     func signOut() async throws {
         await store.setUser(nil)
     }
