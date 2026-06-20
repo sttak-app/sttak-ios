@@ -86,6 +86,12 @@ struct ChartLearningView: View {
                     .padding(.horizontal, AppSpacing.screenHorizontal)
                     .padding(.top, AppSpacing.lg)
 
+                #if DEBUG
+                debugPriceBar(viewModel)
+                    .padding(.horizontal, AppSpacing.screenHorizontal)
+                    .padding(.top, AppSpacing.sm)
+                #endif
+
                 if let detail = viewModel.selectedSignalDetail {
                     SignalDetailCard(detail: detail).padding(.top, AppSpacing.md)
                 } else if !viewModel.signalEvents.isEmpty {
@@ -107,17 +113,40 @@ struct ChartLearningView: View {
             Text(viewModel.selectedStock?.name ?? "차트학습")
                 .font(AppFont.screenTitle).foregroundStyle(AppColor.ink)
             Spacer()
-            if let quote = viewModel.quote {
+            if let price = viewModel.displayPrice, let change = viewModel.displayChangePercent {
                 HStack(alignment: .firstTextBaseline, spacing: AppSpacing.sm) {
-                    Text(Formatters.grouped(quote.price.amount)).font(AppFont.numberLarge).foregroundStyle(AppColor.ink)
-                    Text(Formatters.signedPercent(quote.changePercent))
+                    Text(Formatters.grouped(price.amount)).font(AppFont.numberLarge).foregroundStyle(AppColor.ink)
+                    Text(Formatters.signedPercent(change))
                         .font(AppFont.number(14))
-                        .foregroundStyle(quote.changePercent >= 0 ? AppColor.priceUp : AppColor.priceDown)
+                        .foregroundStyle(change >= 0 ? AppColor.priceUp : AppColor.priceDown)
                 }
             }
         }
         .padding(.top, AppSpacing.md)
     }
+
+    #if DEBUG
+    /// 디버그: 현재가를 ±조정해 이익/손실 매도 → 회고 win/loss를 직접 확인. release 빌드엔 없음.
+    private func debugPriceBar(_ viewModel: ChartLearningViewModel) -> some View {
+        HStack(spacing: AppSpacing.sm) {
+            Text("DEBUG 현재가").font(AppFont.microCaption).foregroundStyle(AppColor.textMuted2)
+            debugButton("-5%") { viewModel.debugAdjustPrice(byPercent: -5) }
+            debugButton("초기화") { viewModel.debugResetPrice() }
+            debugButton("+5%") { viewModel.debugAdjustPrice(byPercent: 5) }
+            Spacer()
+        }
+        .padding(.vertical, AppSpacing.xs)
+    }
+
+    private func debugButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title).font(AppFont.metaCaption).foregroundStyle(AppColor.accentDeep)
+                .padding(.horizontal, AppSpacing.sm).padding(.vertical, AppSpacing.xs)
+                .background(AppColor.accentTintSoft).clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+    #endif
 
     // MARK: 종목 선택
     private func stockSelector(_ viewModel: ChartLearningViewModel) -> some View {
