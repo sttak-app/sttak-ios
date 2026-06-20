@@ -60,6 +60,11 @@ final class AppContainer: Sendable {
             portfolio: portfolio
         )
     }
+
+    @MainActor
+    func makeNewsDetailViewModel(news: NewsItem, stockName: String) -> NewsDetailViewModel {
+        NewsDetailViewModel(news: news, stockName: stockName, chat: chat)
+    }
 }
 
 // MARK: - Environment 주입

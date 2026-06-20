@@ -5,4 +5,6 @@ import Foundation
 protocol ChatRepository: Sendable {
     /// 질문을 보내고 답변을 조각(텍스트)으로 스트리밍한다.
     func ask(question: String, context: ChatContext) -> AsyncThrowingStream<String, Error>
+    /// 맥락별 빠른 선택 질문(추천). 매핑: GET /chat/suggestions?context=…
+    func suggestedQuestions(for context: ChatContext) async throws -> [String]
 }

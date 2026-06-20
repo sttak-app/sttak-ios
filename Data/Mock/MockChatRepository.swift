@@ -23,4 +23,8 @@ struct MockChatRepository: ChatRepository {
             continuation.onTermination = { _ in task.cancel() }
         }
     }
+
+    func suggestedQuestions(for context: ChatContext) async throws -> [String] {
+        MockData.quickAnswers.map(\.question)
+    }
 }

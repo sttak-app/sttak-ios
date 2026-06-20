@@ -11,10 +11,18 @@ final class HomeViewModel {
         case error(String)
     }
 
+    struct PresentedNews: Identifiable, Equatable {
+        let id: Int
+        let stockName: String
+        let news: NewsItem
+    }
+
     private(set) var state: State = .loading
     private(set) var focusIndex = 0
     private(set) var isRefreshing = false
     private(set) var assetText = ""
+    private(set) var presentedNews: PresentedNews?
+    private var presentationCounter = 0
 
     private let loadBriefing: LoadDailyBriefing
     private let auth: AuthRepository
@@ -48,9 +56,14 @@ final class HomeViewModel {
         focusIndex = index
     }
 
-    /// 뉴스 상세 진입점(스텁) — 시트 콘텐츠는 커밋 12.
-    func openNewsDetail(stockCode: String, news: NewsItem) {
-        // TODO(커밋 12): 뉴스 상세 시트 표시
+    /// 뉴스 상세 시트 표시.
+    func openNewsDetail(stockName: String, news: NewsItem) {
+        presentationCounter += 1
+        presentedNews = PresentedNews(id: presentationCounter, stockName: stockName, news: news)
+    }
+
+    func dismissNewsDetail() {
+        presentedNews = nil
     }
 
     private func reload() async {

@@ -28,4 +28,13 @@ extension Sentiment {
         case .negative: return .negative
         }
     }
+
+    /// 부드러운 판단 문구(뉴스 상세 "왜 중요한가요" 헤더). 단정 회피 톤.
+    var softNewsLabel: String {
+        switch self {
+        case .positive: return "호재에 가까운 소식이에요"
+        case .neutral: return "지금은 중립적인 소식이에요"
+        case .negative: return "주의해서 볼 소식이에요"
+        }
+    }
 }

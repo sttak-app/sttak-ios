@@ -4,6 +4,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(\.container) private var container
     @State private var viewModel: HomeViewModel?
+    @State private var detailViewModel: NewsDetailViewModel?
 
     var body: some View {
         ZStack {
@@ -20,6 +21,23 @@ struct HomeView: View {
                 await viewModel?.load()
             }
         }
+        .bottomSheet(isPresented: sheetBinding) {
+            if let detailViewModel {
+                NewsDetailView(viewModel: detailViewModel, onClose: { viewModel?.dismissNewsDetail() })
+            }
+        }
+        .onChange(of: viewModel?.presentedNews?.id) { _, newID in
+            if newID != nil, let presented = viewModel?.presentedNews {
+                detailViewModel = container.makeNewsDetailViewModel(news: presented.news, stockName: presented.stockName)
+            }
+        }
+    }
+
+    private var sheetBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel?.presentedNews != nil },
+            set: { if !$0 { viewModel?.dismissNewsDetail() } }
+        )
     }
 
     @ViewBuilder
@@ -229,7 +247,7 @@ private struct FocusPager: View {
         TabView(selection: focusBinding) {
             ForEach(Array(briefing.stocks.enumerated()), id: \.offset) { index, sb in
                 FocusCardView(briefing: sb) { news in
-                    viewModel.openNewsDetail(stockCode: sb.stock.code, news: news)
+                    viewModel.openNewsDetail(stockName: sb.stock.name, news: news)
                 }
                 .padding(.horizontal, AppSpacing.lg)
                 .frame(maxHeight: .infinity, alignment: .top)
