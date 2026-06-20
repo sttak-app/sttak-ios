@@ -18,4 +18,6 @@ protocol PortfolioRepository: Sendable {
     func fetchTrades() async throws -> [Trade]
     /// 비거래 현금 적립(퀴즈 보상 등). 매핑: 서버가 보상 트랜잭션으로 처리.
     func creditCash(_ amount: Money) async throws
+    /// 매도 직후 회고를 해당 매매 기록에 연결(기록 영속화). 매핑: PUT /trades/{id}/retrospective.
+    func attachRetrospective(_ retrospective: Retrospective, toTradeID id: String) async throws
 }

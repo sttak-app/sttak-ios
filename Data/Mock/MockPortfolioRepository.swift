@@ -27,4 +27,8 @@ struct MockPortfolioRepository: PortfolioRepository {
     func creditCash(_ amount: Money) async throws {
         await store.addCapital(amount.amount)
     }
+
+    func attachRetrospective(_ retrospective: Retrospective, toTradeID id: String) async throws {
+        await store.attachRetrospective(retrospective, toTradeID: id)
+    }
 }

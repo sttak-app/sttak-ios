@@ -7,6 +7,27 @@ final class MockRepositoriesSmokeTests: XCTestCase {
 
     private func rationale() -> TradeRationale { TradeRationale(text: "테스트 근거") }
 
+    func testAttachRetrospective_persistsToTradeRecord() async throws {
+        let store = MockLocalStore(cash: 10_000_000, holdings: [
+            Holding(stockCode: "005930", quantity: 10, averagePrice: .krw(1_000)),
+        ])
+        let portfolio = MockPortfolioRepository(store: store)
+        let trade = try await portfolio.execute(
+            type: .sell, stockCode: "005930", quantity: 5, price: .krw(1_200), rationale: rationale()
+        )
+        XCTAssertNil(trade.retrospective) // 매도 직후엔 회고 없음
+
+        let retro = Retrospective(
+            id: "retro-1", summaryLine: "5주 매도", goodPoints: ["근거가 분명했어요"],
+            watchPoints: ["남은 수량 계획"], isPartialSell: true, createdAt: Date(), followUp: nil
+        )
+        try await portfolio.attachRetrospective(retro, toTradeID: trade.id)
+
+        // 기록에 영속화 → 마이 회고 아코디언에 노출.
+        let saved = try await portfolio.fetchTrades().first { $0.id == trade.id }
+        XCTAssertEqual(saved?.retrospective?.id, "retro-1")
+    }
+
     func testBuy_reducesCash_andAddsHolding() async throws {
         let store = MockLocalStore(cash: 10_000_000)
         let portfolio = MockPortfolioRepository(store: store)

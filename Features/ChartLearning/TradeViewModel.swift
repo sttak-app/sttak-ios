@@ -135,7 +135,15 @@ final class TradeViewModel {
                     if Task.isCancelled { break }
                     self?.retro = snapshot
                 }
-                self?.retroState = Task.isCancelled ? .cancelled : .done
+                if Task.isCancelled {
+                    self?.retroState = .cancelled
+                } else {
+                    self?.retroState = .done
+                    // 완성된 회고를 매매 기록에 영속화 → 마이 회고 기록에 표시(시드 매도와 동일).
+                    if let self, let retro = self.retro {
+                        try? await self.portfolio.attachRetrospective(retro, toTradeID: trade.id)
+                    }
+                }
             } catch {
                 self?.retroState = Task.isCancelled ? .cancelled : .error("회고를 불러오지 못했어요.")
             }

@@ -69,6 +69,17 @@ actor MockLocalStore {
         return trade
     }
 
+    /// 매도 직후 회고를 해당 Trade에 연결(기록 영속화). Trade는 불변이라 복제 후 교체.
+    func attachRetrospective(_ retrospective: Retrospective, toTradeID id: String) {
+        guard let index = trades.firstIndex(where: { $0.id == id }) else { return }
+        let t = trades[index]
+        trades[index] = Trade(
+            id: t.id, type: t.type, stockCode: t.stockCode, quantity: t.quantity, price: t.price,
+            rationale: t.rationale, executedAt: t.executedAt, realizedProfit: t.realizedProfit,
+            retrospective: retrospective
+        )
+    }
+
     // MARK: 퀴즈/자본금
     func addCapital(_ amount: Int) { cash += amount }
 
