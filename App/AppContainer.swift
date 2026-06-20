@@ -51,6 +51,15 @@ final class AppContainer: Sendable {
     func makeOnboardingViewModel() -> OnboardingViewModel {
         OnboardingViewModel(auth: auth, marketData: marketData)
     }
+
+    @MainActor
+    func makeHomeViewModel() -> HomeViewModel {
+        HomeViewModel(
+            loadBriefing: LoadDailyBriefing(marketData: marketData, news: news),
+            auth: auth,
+            portfolio: portfolio
+        )
+    }
 }
 
 // MARK: - Environment 주입

@@ -15,4 +15,28 @@ enum Formatters {
         let sign = value >= 0 ? "+" : ""
         return sign + String(format: "%.\(fractionDigits)f", value) + "%"
     }
+
+    /// 보유 자산(만원 단위). 예: 10,000,000 → "1,000만원".
+    static func assetManwon(_ amount: Int) -> String {
+        grouped(amount / 10_000) + "만원"
+    }
+
+    /// 한국어 날짜. 예: "6월 18일".
+    static func koreanDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "M월 d일"
+        return formatter.string(from: date)
+    }
+
+    /// 상대 시각. 예: "방금", "32분 전", "3시간 전".
+    static func relativeTime(_ date: Date, reference: Date) -> String {
+        let seconds = max(0, reference.timeIntervalSince(date))
+        let minutes = Int(seconds / 60)
+        if minutes < 1 { return "방금" }
+        if minutes < 60 { return "\(minutes)분 전" }
+        let hours = minutes / 60
+        if hours < 24 { return "\(hours)시간 전" }
+        return "\(hours / 24)일 전"
+    }
 }

@@ -11,7 +11,9 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            tab(.home, title: "홈", systemImage: "house")
+            HomeView()
+                .tabItem { Label("홈", systemImage: "house") }
+                .tag(Tab.home)
             tab(.chart, title: "차트학습", systemImage: "chart.xyaxis.line")
             tab(.quiz, title: "퀴즈", systemImage: "checkmark.circle")
             tab(.my, title: "마이", systemImage: "person")
