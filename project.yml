@@ -59,3 +59,25 @@ targets:
           - SpaceGrotesk-Medium.ttf
           - SpaceGrotesk-SemiBold.ttf
           - SpaceGrotesk-Bold.ttf
+
+  sttakTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: sttak
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sttak.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  sttak:
+    build:
+      targets:
+        sttak: all
+        sttakTests: [test]
+    test:
+      targets:
+        - sttakTests
