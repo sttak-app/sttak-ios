@@ -65,6 +65,11 @@ final class AppContainer: Sendable {
     func makeNewsDetailViewModel(news: NewsItem, stockName: String) -> NewsDetailViewModel {
         NewsDetailViewModel(news: news, stockName: stockName, chat: chat)
     }
+
+    @MainActor
+    func makeChartLearningViewModel() -> ChartLearningViewModel {
+        ChartLearningViewModel(auth: auth, marketData: marketData)
+    }
 }
 
 // MARK: - Environment 주입

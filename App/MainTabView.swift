@@ -14,7 +14,9 @@ struct MainTabView: View {
             HomeView()
                 .tabItem { Label("홈", systemImage: "house") }
                 .tag(Tab.home)
-            tab(.chart, title: "차트학습", systemImage: "chart.xyaxis.line")
+            ChartLearningView()
+                .tabItem { Label("차트학습", systemImage: "chart.xyaxis.line") }
+                .tag(Tab.chart)
             tab(.quiz, title: "퀴즈", systemImage: "checkmark.circle")
             tab(.my, title: "마이", systemImage: "person")
         }
