@@ -11,10 +11,10 @@ actor MockLocalStore {
     private(set) var quizLastTakenAt: Date?
     private(set) var lastQuizCompletion: QuizCompletion?
 
-    init(cash: Int = MockData.initialCash) {
+    init(cash: Int = MockData.initialCash, holdings: [Holding] = [], trades: [Trade] = []) {
         self.cash = cash
-        self.holdings = []
-        self.trades = []
+        self.holdings = holdings
+        self.trades = trades
         self.user = nil
         self.quizLastTakenAt = nil
     }
@@ -37,14 +37,19 @@ actor MockLocalStore {
         guard quantity > 0 else { throw RepositoryError.validation(message: "수량은 1 이상이어야 해요.") }
         let amount = price.amount * quantity
 
+        var realizedProfit: Money?
         switch type {
         case .buy:
             guard cash >= amount else { throw RepositoryError.validation(message: "보유 현금이 부족해요.") }
             cash -= amount
             applyBuy(stockCode: stockCode, quantity: quantity, price: price)
         case .sell:
-            let held = holdings.first { $0.stockCode == stockCode }?.quantity ?? 0
+            let position = holdings.first { $0.stockCode == stockCode }
+            let held = position?.quantity ?? 0
             guard held >= quantity else { throw RepositoryError.validation(message: "보유 수량이 부족해요.") }
+            // 평단은 매도 전 값으로 실현손익 계산.
+            let avg = position?.averagePrice.amount ?? price.amount
+            realizedProfit = .krw((price.amount - avg) * quantity)
             cash += amount
             applySell(stockCode: stockCode, quantity: quantity)
         }
@@ -57,6 +62,7 @@ actor MockLocalStore {
             price: price,
             rationale: rationale,
             executedAt: Date(),
+            realizedProfit: realizedProfit,
             retrospective: nil
         )
         trades.append(trade)

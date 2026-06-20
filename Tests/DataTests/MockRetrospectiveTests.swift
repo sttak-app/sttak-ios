@@ -7,7 +7,8 @@ final class MockRetrospectiveTests: XCTestCase {
     private func sellTrade() -> Trade {
         Trade(
             id: "t1", type: .sell, stockCode: "005930", quantity: 5, price: .krw(72_000),
-            rationale: TradeRationale(text: "목표가 도달"), executedAt: Date(timeIntervalSince1970: 0), retrospective: nil
+            rationale: TradeRationale(text: "목표가 도달"), executedAt: Date(timeIntervalSince1970: 0),
+            realizedProfit: .krw(20_000), retrospective: nil
         )
     }
 

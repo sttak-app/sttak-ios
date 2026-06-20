@@ -51,7 +51,8 @@ private func _domainSmokeCheck() {
     )
     _ = Trade(
         id: "t1", type: .sell, stockCode: "005930", quantity: 5, price: .krw(72_000),
-        rationale: TradeRationale(text: "목표가 도달"), executedAt: Date(), retrospective: retro
+        rationale: TradeRationale(text: "목표가 도달"), executedAt: Date(),
+        realizedProfit: .krw(20_000), retrospective: retro
     )
     _ = QuizSet(id: "q1", questions: [], takenAt: nil, correctCount: nil, earnedCapital: nil)
     _ = ChatSession(id: "c1", context: .news, messages: [])

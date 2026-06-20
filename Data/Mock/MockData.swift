@@ -149,6 +149,44 @@ enum MockData {
     static let rankingChanges = [1, -1, 2, 0, 1, -2, 3, 0, 1, -1, 2, 0]
     static let rankingAssetTop = [16_420_000, 15_880_000, 15_210_000, 14_760_000, 14_300_000, 13_950_000, 13_510_000, 13_200_000, 12_940_000, 12_610_000, 12_330_000, 12_080_000]
 
+    // MARK: 마이 시드 — "이미 써 온 사용자" 초기 상태(보유·매매기록·회고). 거래/평단/현금 정합.
+    // 매수 삼성15@67,800 + NAVER4@225,000 + SK3@195,000, 매도 NAVER4@221,000(손실)·삼성5@71,200(부분익절)
+    // → 잔여 삼성10@67,800·SK3@195,000, 현금 8,738,000.
+    static let seedCash = 8_738_000
+
+    static let seedHoldings: [Holding] = [
+        Holding(stockCode: "005930", quantity: 10, averagePrice: .krw(67_800)),
+        Holding(stockCode: "000660", quantity: 3, averagePrice: .krw(195_000)),
+    ]
+
+    static var seedTrades: [Trade] {
+        func daysAgo(_ d: Int) -> Date { Date(timeIntervalSinceNow: -Double(d) * 86_400) }
+        let naverRetro = Retrospective(
+            id: "retro-naver", summaryLine: "4주 · 221,000원에 매도",
+            goodPoints: ["손실을 키우지 않고 정리한 것도 하나의 선택이에요.", "근거를 남겨 다음 판단의 기준을 만들었어요."],
+            watchPoints: ["매도 전 거래량 흐름도 함께 봤다면 더 단단했을 거예요."],
+            isPartialSell: false, createdAt: daysAgo(34), followUp: nil
+        )
+        let samsungRetro = Retrospective(
+            id: "retro-samsung", summaryLine: "5주 · 71,200원에 매도",
+            goodPoints: ["매매 전에 이유를 적어 둔 점이 좋아요. 감이 아니라 신호를 근거로 삼았어요.", "목표 수익에서 일부를 정리해 이익을 지켰어요."],
+            watchPoints: ["절반만 정리했어요. 남은 수량의 계획도 함께 세워 두면 좋아요."],
+            isPartialSell: true, createdAt: daysAgo(3), followUp: nil
+        )
+        return [
+            Trade(id: "seed-0", type: .buy, stockCode: "005930", quantity: 15, price: .krw(67_800),
+                  rationale: TradeRationale(text: "실적 기대와 이동평균선 정배열로 분할 매수."), executedAt: daysAgo(40), realizedProfit: nil, retrospective: nil),
+            Trade(id: "seed-1", type: .buy, stockCode: "035420", quantity: 4, price: .krw(225_000),
+                  rationale: TradeRationale(text: "AI 검색 베타 기대감에 소량 매수해 봤어요."), executedAt: daysAgo(38), realizedProfit: nil, retrospective: nil),
+            Trade(id: "seed-2", type: .sell, stockCode: "035420", quantity: 4, price: .krw(221_000),
+                  rationale: TradeRationale(text: "광고 매출 둔화 우려로 흐름이 꺾이는 것 같아 정리했어요."), executedAt: daysAgo(34), realizedProfit: .krw(-16_000), retrospective: naverRetro),
+            Trade(id: "seed-3", type: .buy, stockCode: "000660", quantity: 3, price: .krw(195_000),
+                  rationale: TradeRationale(text: "HBM4 양산 호재가 실적으로 이어질 것 같아서."), executedAt: daysAgo(6), realizedProfit: nil, retrospective: nil),
+            Trade(id: "seed-4", type: .sell, stockCode: "005930", quantity: 5, price: .krw(71_200),
+                  rationale: TradeRationale(text: "골든크로스 뒤 목표 수익에 도달해서 절반만 정리했어요."), executedAt: daysAgo(3), realizedProfit: .krw(17_000), retrospective: samsungRetro),
+        ]
+    }
+
     // MARK: 내부 — 섹터(뉴스 보유 종목만 핸드오프에 명시, 나머지는 빈 문자열)
     private static func sector(for code: String) -> String {
         switch code {

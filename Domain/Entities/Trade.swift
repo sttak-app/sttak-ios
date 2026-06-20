@@ -15,5 +15,6 @@ struct Trade: Sendable, Equatable, Identifiable {
     let price: Money                   // 체결가(주당)
     let rationale: TradeRationale      // 근거(필수)
     let executedAt: Date
+    let realizedProfit: Money?         // 매도 실현손익 (매수는 nil) = (매도가 − 평단) × 수량
     let retrospective: Retrospective?  // 매도 건에 연결 (매수는 nil)
 }

@@ -29,7 +29,8 @@ final class AppContainer: Sendable {
         case .mock, .live:
             // ⬇︎ 여기가 Mock→Live 교체의 단일 지점. 지금은 전부 Mock.
             //   (OpenAPI 확정 후 .live 분기에서 Live* 구현으로 바꾸면 됨)
-            let store = MockLocalStore()
+            // 시드: "이미 써 온 사용자" 초기 상태(보유·매매기록·회고). 트레이드/퀴즈는 이 store를 공유.
+            let store = MockLocalStore(cash: MockData.seedCash, holdings: MockData.seedHoldings, trades: MockData.seedTrades)
             self.auth = MockAuthRepository(store: store)
             self.news = MockNewsRepository()
             self.marketData = MockMarketDataRepository()
@@ -64,6 +65,15 @@ final class AppContainer: Sendable {
     @MainActor
     func makeNewsDetailViewModel(news: NewsItem, stockName: String) -> NewsDetailViewModel {
         NewsDetailViewModel(news: news, stockName: stockName, chat: chat)
+    }
+
+    @MainActor
+    func makeMyViewModel() -> MyViewModel {
+        MyViewModel(
+            evaluate: EvaluatePortfolio(portfolio: portfolio, market: marketData),
+            portfolio: portfolio,
+            market: marketData
+        )
     }
 
     @MainActor

@@ -65,6 +65,10 @@ enum AppColor {
     static let priceDown = Color(rgb: 0x3A6DE8)  // 하락/악재 무드 — 파랑
     static let priceFlat = Color(rgb: 0x8A8478)  // 보합/중립 — 회색
 
+    // ── 다크 자산 카드 위 손익 (핸드오프 #FF8A5C/#7FA9F0 — 부호별, 라이트 배경 priceUp/Down보다 부드러운 톤) ──
+    static let assetPnLUp = Color(rgb: 0xFF8A5C)    // 다크 카드 수익(+) — 따뜻한 주황
+    static let assetPnLDown = Color(rgb: 0x7FA9F0)  // 다크 카드 손실(−) — 부드러운 파랑
+
     // ── 외부 브랜드 ──
     static let kakao = Color(rgb: 0xFEE500)
     static let kakaoText = Color(rgb: 0x3C1E1E)
