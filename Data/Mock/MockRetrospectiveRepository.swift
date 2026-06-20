@@ -2,37 +2,43 @@ import Foundation
 
 /// 회고 Mock. 매도 직후 회고를 점진 스트리밍(요약→잘한점→함께볼점), 후속 회고는 결정적 시뮬레이션.
 /// 회고 문구는 `sttak 차트학습.dc.html` buildRetro/ followText 를 이식.
-/// (win/loss로 갈리는 두 번째 잘한점은 실손익이 필요해 Mock에선 중립 문구로 대체 — 실제 분기는 Live LLM)
+/// 실현 손익(매도가−평단) 부호로 win/loss 두 번째 잘한점을 분기한다(커밋 11 합의).
 struct MockRetrospectiveRepository: RetrospectiveRepository {
     var stepDelay: Duration = .milliseconds(250)
 
-    private static let goodPoints = [
-        "매매 전에 이유를 적어 둔 점이 좋아요. 막연한 감이 아니라 근거를 남겼어요.",
-        "결정을 행동으로 옮기고 기록으로 남겼어요. 다음 판단의 재료가 돼요.",
-    ]
+    private static let firstGood = "매매 전에 이유를 적어 둔 점이 좋아요. 막연한 감이 아니라 근거를 남겼어요."
+    private static let winGood = "수익을 실현해 계획을 행동으로 옮겼어요. 이익을 지키는 것도 중요한 연습이에요."
+    private static let lossGood = "손실을 키우지 않고 정리한 것도 하나의 선택이에요. 다음 판단을 위한 여유를 남겼어요."
+    private static let partialWatch = "일부만 매도했어요. 남은 수량의 계획도 함께 세워 두면 좋아요."
     private static let watchPoints = [
         "매도 전에 거래량·이동평균선 흐름도 같이 봤다면 판단이 더 단단했을 거예요.",
         "근거에 적은 기대가 실제로 맞았는지 한 달 뒤에 다시 비교해 보세요.",
     ]
 
-    func generateRetrospective(for trade: Trade) -> AsyncThrowingStream<Retrospective, Error> {
+    func generateRetrospective(
+        for trade: Trade,
+        realizedProfit: Money,
+        isPartialSell: Bool
+    ) -> AsyncThrowingStream<Retrospective, Error> {
         let delay = stepDelay
         let id = "retro-\(trade.id)"
         let summary = "\(trade.quantity)주 · \(Self.grouped(trade.price.amount))원에 매도"
+        let good = [Self.firstGood, realizedProfit.amount >= 0 ? Self.winGood : Self.lossGood]
+        let watch = (isPartialSell ? [Self.partialWatch] : []) + Self.watchPoints
         return AsyncThrowingStream { continuation in
             let task = Task {
                 func snapshot(_ good: [String], _ watch: [String]) -> Retrospective {
                     Retrospective(
                         id: id, summaryLine: summary, goodPoints: good, watchPoints: watch,
-                        isPartialSell: false, createdAt: Date(), followUp: nil
+                        isPartialSell: isPartialSell, createdAt: Date(), followUp: nil
                     )
                 }
                 do {
                     continuation.yield(snapshot([], []))
                     try await Task.sleep(for: delay)
-                    continuation.yield(snapshot(Self.goodPoints, []))
+                    continuation.yield(snapshot(good, []))
                     try await Task.sleep(for: delay)
-                    continuation.yield(snapshot(Self.goodPoints, Self.watchPoints))
+                    continuation.yield(snapshot(good, watch))
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)

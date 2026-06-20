@@ -68,7 +68,21 @@ final class AppContainer: Sendable {
 
     @MainActor
     func makeChartLearningViewModel() -> ChartLearningViewModel {
-        ChartLearningViewModel(auth: auth, marketData: marketData)
+        ChartLearningViewModel(auth: auth, marketData: marketData, portfolioRepo: portfolio)
+    }
+
+    @MainActor
+    func makeTradeViewModel(intent: ChartLearningViewModel.TradeIntent, onCompleted: @escaping () -> Void) -> TradeViewModel {
+        TradeViewModel(
+            type: intent.type,
+            stockCode: intent.stockCode,
+            stockName: intent.stockName,
+            price: intent.price,
+            executeTrade: ExecuteTrade(portfolio: portfolio),
+            portfolio: portfolio,
+            retrospective: retrospective,
+            onCompleted: onCompleted
+        )
     }
 }
 

@@ -4,8 +4,12 @@ import Foundation
 /// 매핑: 생성=POST /retrospectives (SSE), 후속=POST /trades/{id}/followup.
 protocol RetrospectiveRepository: Sendable {
     /// 매도 직후 회고를 점진적으로 스트리밍한다(요약 → 잘한 점 → 함께 볼 점).
-    /// 마지막으로 방출되는 값이 완성본이다.
-    func generateRetrospective(for trade: Trade) -> AsyncThrowingStream<Retrospective, Error>
+    /// 마지막으로 방출되는 값이 완성본이다. 실현 손익(매도가−평단)·부분매도 여부로 톤을 분기.
+    func generateRetrospective(
+        for trade: Trade,
+        realizedProfit: Money,
+        isPartialSell: Bool
+    ) -> AsyncThrowingStream<Retrospective, Error>
     /// 한 달 뒤 후속 회고(서버 스케줄러+APNs, 확정 D8). Mock 단계는 시뮬레이션.
     func generateFollowUp(for trade: Trade) async throws -> FollowUpRetrospective
 }

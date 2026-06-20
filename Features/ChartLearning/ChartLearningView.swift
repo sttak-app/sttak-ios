@@ -10,12 +10,14 @@ struct ChartLearningView: View {
 
     @State private var panBaseStart: Int?
     @State private var zoomBaseCount: Int?
+    @State private var tradeViewModel: TradeViewModel?
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             AppColor.backgroundPrimary.ignoresSafeArea()
             if let viewModel {
                 content(viewModel)
+                if viewModel.state == .loaded { tradeBar(viewModel) }
             } else {
                 ProgressView().tint(AppColor.accent)
             }
@@ -26,6 +28,51 @@ struct ChartLearningView: View {
                 await viewModel?.load()
             }
         }
+        .bottomSheet(isPresented: tradeBinding) {
+            if let tradeViewModel {
+                TradeSheetView(viewModel: tradeViewModel, onClose: { viewModel?.dismissTrade() })
+            }
+        }
+        .onChange(of: viewModel?.tradeIntent?.id) { _, newID in
+            if newID != nil, let intent = viewModel?.tradeIntent {
+                tradeViewModel = container.makeTradeViewModel(intent: intent) {
+                    Task { await viewModel?.onTradeCompleted() }
+                }
+            }
+        }
+    }
+
+    private var tradeBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel?.tradeIntent != nil },
+            set: { if !$0 { viewModel?.dismissTrade() } }
+        )
+    }
+
+    // MARK: 트레이드 바
+    private func tradeBar(_ viewModel: ChartLearningViewModel) -> some View {
+        HStack(spacing: AppSpacing.sm) {
+            if viewModel.heldQuantity > 0 {
+                Text("보유 \(viewModel.heldQuantity)주")
+                    .font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted)
+                    .padding(.trailing, AppSpacing.xs)
+            }
+            tradeButton("매도", color: AppColor.priceDown) { viewModel.openSell() }
+            tradeButton("매수", color: AppColor.priceUp) { viewModel.openBuy() }
+        }
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.vertical, AppSpacing.md)
+        .background(.regularMaterial)
+        .overlay(alignment: .top) { Rectangle().fill(AppColor.hairline2).frame(height: 1) }
+    }
+
+    private func tradeButton(_ title: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title).font(AppFont.ctaLabel).foregroundStyle(.white)
+                .frame(maxWidth: .infinity).frame(height: 50)
+                .background(color).clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -49,7 +96,7 @@ struct ChartLearningView: View {
                 CoachCard(viewModel: viewModel).padding(.top, AppSpacing.md)
             }
             .padding(.horizontal, AppSpacing.screenHorizontal)
-            .padding(.bottom, AppSpacing.xxl)
+            .padding(.bottom, 90) // 트레이드 바 회피
         }
     }
 

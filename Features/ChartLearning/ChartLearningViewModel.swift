@@ -31,8 +31,13 @@ final class ChartLearningViewModel {
     private(set) var signalEvents: [SignalEvent] = []
     private(set) var selectedSignalIndex: Int?
 
+    private(set) var portfolio: Portfolio?
+    private(set) var tradeIntent: TradeIntent?
+    private var tradeCounter = 0
+
     private let auth: AuthRepository
     private let marketData: MarketDataRepository
+    private let portfolioRepo: PortfolioRepository
 
     // 도메인 전체 시리즈 캐시(뷰포트 변경 시 재계산 안 함)
     private var maFull: [Int: [Double?]] = [:]
@@ -43,13 +48,47 @@ final class ChartLearningViewModel {
     private let maxSignals = 4
     private let signalMinGap = 5
 
-    init(auth: AuthRepository, marketData: MarketDataRepository) {
+    init(auth: AuthRepository, marketData: MarketDataRepository, portfolioRepo: PortfolioRepository) {
         self.auth = auth
         self.marketData = marketData
+        self.portfolioRepo = portfolioRepo
+    }
+
+    /// 매수/매도 시트 진입 의도.
+    struct TradeIntent: Identifiable, Equatable {
+        let id: Int
+        let type: TradeType
+        let stockCode: String
+        let stockName: String
+        let price: Money
     }
 
     var selectedStock: Stock? {
         stocks.indices.contains(selectedStockIndex) ? stocks[selectedStockIndex] : nil
+    }
+
+    /// 현재 종목 보유 수량(트레이드 바).
+    var heldQuantity: Int {
+        guard let code = selectedStock?.code else { return 0 }
+        return portfolio?.holdings.first { $0.stockCode == code }?.quantity ?? 0
+    }
+
+    func openBuy() {
+        guard let stock = selectedStock, let price = quote?.price else { return }
+        tradeCounter += 1
+        tradeIntent = TradeIntent(id: tradeCounter, type: .buy, stockCode: stock.code, stockName: stock.name, price: price)
+    }
+
+    func openSell() {
+        guard let stock = selectedStock, let price = quote?.price else { return }
+        tradeCounter += 1
+        tradeIntent = TradeIntent(id: tradeCounter, type: .sell, stockCode: stock.code, stockName: stock.name, price: price)
+    }
+
+    func dismissTrade() { tradeIntent = nil }
+
+    func onTradeCompleted() async {
+        portfolio = try? await portfolioRepo.fetchPortfolio()
     }
 
     var visibleCandles: [Candle] {
@@ -66,6 +105,7 @@ final class ChartLearningViewModel {
             let user = try await auth.currentUser()
             stocks = try await marketData.fetchStocks(forCodes: user?.watchlistCodes ?? [])
             guard !stocks.isEmpty else { state = .error("관심종목을 먼저 추가해 주세요."); return }
+            portfolio = try? await portfolioRepo.fetchPortfolio()
             await loadCandles()
         } catch {
             state = .error("차트를 불러오지 못했어요.")
