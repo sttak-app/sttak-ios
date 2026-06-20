@@ -325,15 +325,13 @@ private struct AITab: View {
     private var inputArea: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text("이런 점이 궁금하다면").font(AppFont.microCaption).foregroundStyle(AppColor.textMuted2)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: AppSpacing.sm) {
-                    ForEach(viewModel.suggestedQuestions, id: \.self) { question in
-                        Button { viewModel.ask(question) } label: {
-                            Pill(question, style: .accentSoft)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(viewModel.isStreaming)
+            FlowLayout {
+                ForEach(viewModel.suggestedQuestions, id: \.self) { question in
+                    Button { viewModel.ask(question) } label: {
+                        Pill(question, style: .accentSoft)
                     }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.isStreaming)
                 }
             }
             HStack(spacing: AppSpacing.sm) {

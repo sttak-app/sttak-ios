@@ -196,26 +196,23 @@ struct ChartLearningView: View {
                 Text("용어를 누르면, 과거에 그 신호가 통했던 구간을 차트에 표시해요")
                     .font(AppFont.bodyStrong).foregroundStyle(AppColor.inkSoft)
             }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: AppSpacing.sm) {
-                    ForEach(IndicatorCopy.panelOrder, id: \.self) { kind in
-                        let selected = viewModel.selectedIndicator == kind
-                        Button { viewModel.selectIndicator(kind) } label: {
-                            HStack(spacing: AppSpacing.xs) {
-                                Circle().fill(IndicatorCopy.dotColor(kind)).frame(width: 8, height: 8)
-                                Text(IndicatorCopy.label(kind)).font(AppFont.bodyStrong)
-                            }
-                            .foregroundStyle(selected ? .white : AppColor.inkSoft)
-                            .padding(.horizontal, AppSpacing.md)
-                            .padding(.vertical, AppSpacing.sm)
-                            .background(selected ? AppColor.ink : AppColor.surface)
-                            .clipShape(RoundedRectangle(cornerRadius: AppRadius.chip))
-                            .appShadow(selected ? .init(color: .clear, radius: 0, x: 0, y: 0) : AppShadow.card)
+            FlowLayout {
+                ForEach(IndicatorCopy.panelOrder, id: \.self) { kind in
+                    let selected = viewModel.selectedIndicator == kind
+                    Button { viewModel.selectIndicator(kind) } label: {
+                        HStack(spacing: AppSpacing.xs) {
+                            Circle().fill(IndicatorCopy.dotColor(kind)).frame(width: 8, height: 8)
+                            Text(IndicatorCopy.label(kind)).font(AppFont.bodyStrong)
                         }
-                        .buttonStyle(.plain)
+                        .foregroundStyle(selected ? .white : AppColor.inkSoft)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.vertical, AppSpacing.sm)
+                        .background(selected ? AppColor.ink : AppColor.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.chip))
+                        .appShadow(selected ? .init(color: .clear, radius: 0, x: 0, y: 0) : AppShadow.card)
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, AppSpacing.xs)
             }
         }
     }
