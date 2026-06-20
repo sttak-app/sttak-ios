@@ -80,6 +80,15 @@ enum MockData {
         "035420": (215_000, -0.81, [219, 218, 217, 218, 216, 215, 216, 214, 215, 213, 214, 215]),
     ]
 
+    /// 종목 기초 정보 — `sttak 차트학습.dc.html` stocks 배열. (code: 시총, PER, PBR)
+    static let fundamentals: [String: StockFundamentals] = [
+        "005930": StockFundamentals(marketCap: "424조", per: "14.2배", pbr: "1.4배"),
+        "000660": StockFundamentals(marketCap: "144조", per: "9.1배", pbr: "1.8배"),
+        "035420": StockFundamentals(marketCap: "35조", per: "21.4배", pbr: "1.2배"),
+        "035720": StockFundamentals(marketCap: "21조", per: "38.0배", pbr: "1.5배"),
+        "005380": StockFundamentals(marketCap: "52조", per: "5.1배", pbr: "0.6배"),
+    ]
+
     /// 캔들 생성 시드 — `sttak 차트학습.dc.html` stocks 배열. (code: seed, base, finalPrice)
     static let candleSeeds: [String: (seed: Int, base: Double, price: Double)] = [
         "005930": (7, 60_000, 71_200),

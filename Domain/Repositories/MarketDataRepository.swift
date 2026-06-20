@@ -14,4 +14,6 @@ protocol MarketDataRepository: Sendable {
     func searchStocks(query: String) async throws -> [Stock]
     /// 인기 종목(온보딩 추천). 매핑: GET /stocks/popular.
     func fetchPopularStocks() async throws -> [Stock]
+    /// 종목 기초 정보(시총/PER/PBR). 없으면 nil. 매핑: GET /stocks/{code}/fundamentals.
+    func fetchFundamentals(forCode code: String) async throws -> StockFundamentals?
 }

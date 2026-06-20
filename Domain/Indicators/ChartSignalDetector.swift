@@ -22,6 +22,8 @@ enum ChartSignalDetector {
     static let forwardWindow = 7              // 이후 방향 판정에 보는 거래일 수
     static let directionThresholdPercent = 1.5 // ±1.5% 밖이면 up/down, 안이면 sideways
     static let minimumIndex = 5               // 워밍업 가드
+    /// 평탄 구간(sd≈0) 억제: 밴드 폭이 가격 대비 이 비율보다 작으면 터치를 신호로 보지 않는다.
+    static let bollingerMinBandFraction = 0.002
 
     static func detect(_ candles: [Candle]) -> [ChartSignal] {
         let n = candles.count
@@ -55,7 +57,9 @@ enum ChartSignalDetector {
         // 볼린저밴드 터치
         let bands = Indicators.bollingerBands(candles, period: bollingerPeriod, multiplier: bollingerMultiplier)
         for i in 0..<n {
-            guard let upper = bands.upper[i], let lower = bands.lower[i] else { continue }
+            guard let upper = bands.upper[i], let lower = bands.lower[i], let middle = bands.middle[i] else { continue }
+            // sd≈0(평탄) 억제: 밴드 폭이 가격 대비 무시할 수준이면 터치를 신호로 내지 않는다.
+            guard middle > 0, (upper - lower) > middle * bollingerMinBandFraction else { continue }
             let close = candles[i].close
             if close >= upper {
                 appendSignal(&signals, .bollingerUpperTouch, at: i, in: candles)

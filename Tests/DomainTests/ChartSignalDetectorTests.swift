@@ -75,11 +75,18 @@ final class ChartSignalDetectorTests: XCTestCase {
         XCTAssertTrue(ChartSignalDetector.detect([]).isEmpty)
     }
 
-    func testFlatInput_noCrossOrRSISignals() {
-        // 완전 평탄: 크로스 없음, RSI 신호 없음.
-        // (볼린저는 sd=0 → close==상단이라 터치가 발생하는 게 핸드오프 동작 — 여기선 검증 대상 아님)
+    func testFlatInput_noSignals_includingBollinger() {
+        // 완전 평탄(sd≈0): 크로스·RSI 없음 + 볼린저 터치도 억제되어야 함(밴드 폭 0).
         let signals = ChartSignalDetector.detect(makeCandles(Array(repeating: 100.0, count: 30)))
-        let crossOrRSI: Set<ChartSignalKind> = [.goldenCross, .deadCross, .rsiOverbought, .rsiOversold]
-        XCTAssertFalse(signals.contains { crossOrRSI.contains($0.kind) })
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    func testNearFlatInput_suppressesBollingerTouch() {
+        // 아주 미세한 변동(밴드 폭이 가격의 0.2% 미만)도 억제.
+        let closes = (0..<30).map { 100.0 + (($0 % 2 == 0) ? 0.0 : 0.02) } // ±0.02 진동
+        let bollinger = ChartSignalDetector.detect(makeCandles(closes)).filter {
+            $0.kind == .bollingerUpperTouch || $0.kind == .bollingerLowerTouch
+        }
+        XCTAssertTrue(bollinger.isEmpty)
     }
 }

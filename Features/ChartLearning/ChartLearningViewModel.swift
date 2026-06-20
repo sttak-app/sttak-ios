@@ -1,13 +1,20 @@
 import SwiftUI
 
-/// 차트학습 상태. 종목·캔들·기간·줌/스크롤 뷰포트. (지표/신호·매매는 이후 커밋)
+/// 차트학습 상태. 종목·캔들·기간·뷰포트 + 지표 오버레이·과거 신호·코치.
+/// 지표/신호는 커밋 6 Domain/Indicators를 그대로 호출(재계산 없음).
 @MainActor
 @Observable
 final class ChartLearningViewModel {
     enum State: Equatable {
-        case loading
-        case loaded
-        case error(String)
+        case loading, loaded, error(String)
+    }
+
+    /// 코치/마커용 신호 이벤트(번호 매겨진).
+    struct SignalEvent: Identifiable {
+        let id: Int            // 번호(1..)
+        let candleIndex: Int
+        let kind: ChartSignalKind
+        let direction: PriceDirection
     }
 
     private(set) var state: State = .loading
@@ -15,11 +22,26 @@ final class ChartLearningViewModel {
     private(set) var selectedStockIndex = 0
     private(set) var candles: [Candle] = []
     private(set) var quote: Quote?
+    private(set) var fundamentals: StockFundamentals?
     private(set) var period: ChartPeriod = .month
     private(set) var viewport = ChartViewport(start: 0, count: ChartPeriod.month.candleCount)
 
+    private(set) var selectedIndicator: IndicatorKind?
+    private(set) var explanationOpen = true
+    private(set) var signalEvents: [SignalEvent] = []
+    private(set) var selectedSignalIndex: Int?
+
     private let auth: AuthRepository
     private let marketData: MarketDataRepository
+
+    // 도메인 전체 시리즈 캐시(뷰포트 변경 시 재계산 안 함)
+    private var maFull: [Int: [Double?]] = [:]
+    private var bandsFull: (middle: [Double?], upper: [Double?], lower: [Double?])?
+    private var rsiFull: [Double?] = []
+
+    private let maPeriods = [5, 20, 60, 120]
+    private let maxSignals = 4
+    private let signalMinGap = 5
 
     init(auth: AuthRepository, marketData: MarketDataRepository) {
         self.auth = auth
@@ -27,11 +49,9 @@ final class ChartLearningViewModel {
     }
 
     var selectedStock: Stock? {
-        guard stocks.indices.contains(selectedStockIndex) else { return nil }
-        return stocks[selectedStockIndex]
+        stocks.indices.contains(selectedStockIndex) ? stocks[selectedStockIndex] : nil
     }
 
-    /// 윈도잉된 보이는 캔들 슬라이스.
     var visibleCandles: [Candle] {
         guard !candles.isEmpty else { return [] }
         let end = min(viewport.start + viewport.count, candles.count)
@@ -39,16 +59,13 @@ final class ChartLearningViewModel {
         return Array(candles[start..<end])
     }
 
+    // MARK: 로드
     func load() async {
         state = .loading
         do {
             let user = try await auth.currentUser()
-            let codes = user?.watchlistCodes ?? []
-            stocks = try await marketData.fetchStocks(forCodes: codes)
-            guard !stocks.isEmpty else {
-                state = .error("관심종목을 먼저 추가해 주세요.")
-                return
-            }
+            stocks = try await marketData.fetchStocks(forCodes: user?.watchlistCodes ?? [])
+            guard !stocks.isEmpty else { state = .error("관심종목을 먼저 추가해 주세요."); return }
             await loadCandles()
         } catch {
             state = .error("차트를 불러오지 못했어요.")
@@ -64,35 +81,234 @@ final class ChartLearningViewModel {
     func selectPeriod(_ period: ChartPeriod) {
         self.period = period
         viewport = .forPeriod(period, total: candles.count)
+        selectedSignalIndex = nil
     }
 
-    /// 팬 — 시작 인덱스로 스크롤.
     func scroll(toStart start: Int) {
         viewport = viewport.scrolled(toStart: start, total: candles.count)
     }
 
-    /// 줌 — 절대 count(중앙 고정).
     func zoom(toCount count: Int) {
         viewport = viewport.withCount(count, total: candles.count)
     }
 
+    // MARK: 지표
+    func selectIndicator(_ kind: IndicatorKind) {
+        if selectedIndicator == kind {
+            selectedIndicator = nil
+            signalEvents = []
+            selectedSignalIndex = nil
+            return
+        }
+        selectedIndicator = kind
+        selectedSignalIndex = nil
+        // 지표 누르면 3개월 프레이밍(핸드오프).
+        period = .threeMonths
+        viewport = .forPeriod(.threeMonths, total: candles.count)
+        computeIndicatorSeries()
+        computeSignals(for: kind)
+    }
+
+    func toggleExplanation() { explanationOpen.toggle() }
+
+    /// 코치 사례/마커 → 그 시점으로 차트 이동 + 선택.
+    func focusSignal(candleIndex: Int) {
+        let count = min(80, max(44, viewport.count))
+        let start = candleIndex - count / 2
+        viewport = .clamped(start: start, count: count, total: candles.count)
+        selectedSignalIndex = candleIndex
+    }
+
+    /// 차트 탭(날짜) → 그 봉에 신호가 있으면 선택.
+    func selectCandle(at date: Date) {
+        guard let index = candles.firstIndex(where: { $0.date == date }) else { return }
+        if signalEvents.contains(where: { $0.candleIndex == index }) {
+            selectedSignalIndex = index
+        }
+    }
+
+    // MARK: 코치 파생값
+    var currentReading: String? {
+        guard let kind = selectedIndicator, let last = candles.indices.last else { return nil }
+        let price = candles[last].close
+        switch kind {
+        case .movingAverage:
+            guard let ma5 = maFull[5]?[last], let ma20 = maFull[20]?[last] else { return nil }
+            let above = price > ma20
+            let shortAbove = ma5 > ma20
+            let trend = (above && shortAbove) ? "위쪽" : (!above && !shortAbove ? "아래쪽" : "중립")
+            return "지금은 가격이 20일선 \(above ? "위" : "아래")에 있고 단기선이 장기선 \(shortAbove ? "위" : "아래")라, 흐름은 ‘\(trend)’으로 읽혀요."
+        case .rsi:
+            guard let rsi = rsiFull[safe: last] ?? nil else { return nil }
+            let zone = rsi >= 70 ? "과열 구간" : (rsi <= 30 ? "과매도 구간" : "중립 구간")
+            return "지금 RSI는 약 \(Int(rsi.rounded()))로 \(zone)이에요."
+        case .bollingerBands:
+            guard let middle = bandsFull?.middle[last] else { return nil }
+            return "지금 가격은 중간선 \(price > middle ? "위" : "아래")에 있어요. 위·아래 띠 사이에서 움직이는 폭을 함께 보세요."
+        case .info, .supportResistance, .volume:
+            return nil
+        }
+    }
+
+    /// 선택된 신호의 상세(코치 디테일 카드).
+    struct SignalDetail {
+        let number: Int
+        let kindLabel: String
+        let daysAgo: Int
+        let description: String
+        let beforePrice: Int
+        let afterPrice: Int
+        let percentText: String
+        let direction: PriceDirection
+        let afterText: String
+    }
+
+    var selectedSignalDetail: SignalDetail? {
+        guard let index = selectedSignalIndex,
+              let event = signalEvents.first(where: { $0.candleIndex == index }),
+              candles.indices.contains(index) else { return nil }
+        let before = candles[index].close
+        let target = min(candles.count - 1, index + ChartSignalDetector.forwardWindow)
+        let after = candles[target].close
+        let pct = before != 0 ? (after - before) / before * 100 : 0
+        return SignalDetail(
+            number: event.id,
+            kindLabel: IndicatorCopy.signalLabel(event.kind),
+            daysAgo: candles.count - 1 - index,
+            description: IndicatorCopy.signalDescription(event.kind),
+            beforePrice: Int(before.rounded()),
+            afterPrice: Int(after.rounded()),
+            percentText: Formatters.signedPercent(pct, fractionDigits: 1),
+            direction: event.direction,
+            afterText: IndicatorCopy.afterText(event.direction)
+        )
+    }
+
+    // MARK: 렌더러용 오버레이 (도메인 시리즈 → 보이는 슬라이스)
+    var chartOverlay: ChartOverlay {
+        guard let kind = selectedIndicator, !candles.isEmpty else { return .none }
+        let visStart = viewport.start
+        let visEnd = min(viewport.start + viewport.count, candles.count)
+        guard visStart < visEnd else { return .none }
+        let range = visStart..<visEnd
+
+        var overlay = ChartOverlay()
+        switch kind {
+        case .movingAverage:
+            overlay.movingAverages = maPeriods.compactMap { period in
+                guard let series = maFull[period] else { return nil }
+                let points = range.compactMap { i -> DatedValue? in
+                    guard let v = series[i] else { return nil }
+                    return DatedValue(date: candles[i].date, value: v)
+                }
+                return MovingAverageLine(period: period, color: maColor(period), points: points)
+            }
+        case .bollingerBands:
+            if let bands = bandsFull {
+                overlay.bollinger = range.compactMap { i in
+                    guard let u = bands.upper[i], let m = bands.middle[i], let l = bands.lower[i] else { return nil }
+                    return BollingerPoint(date: candles[i].date, upper: u, middle: m, lower: l)
+                }
+            }
+        case .rsi:
+            overlay.rsi = range.compactMap { i in
+                guard let v = rsiFull[safe: i] ?? nil else { return nil }
+                return DatedValue(date: candles[i].date, value: v)
+            }
+        case .volume:
+            overlay.showVolume = true
+        case .supportResistance:
+            let visible = candles[range]
+            if let lo = visible.map(\.low).min(), let hi = visible.map(\.high).max() {
+                overlay.supportResistance = SupportResistanceLevels(support: lo, resistance: hi)
+            }
+        case .info:
+            break
+        }
+
+        overlay.signals = signalEvents.compactMap { event in
+            guard range.contains(event.candleIndex) else { return nil }
+            let end = min(candles.count - 1, event.candleIndex + ChartSignalDetector.forwardWindow)
+            return SignalMarker(
+                id: event.id,
+                date: candles[event.candleIndex].date,
+                regionEnd: candles[end].date,
+                high: candles[event.candleIndex].high,
+                direction: event.direction
+            )
+        }
+        overlay.selectedDate = selectedSignalIndex.flatMap { candles.indices.contains($0) ? candles[$0].date : nil }
+        return overlay
+    }
+
+    // MARK: 내부
     private func loadCandles() async {
         guard let stock = selectedStock else { return }
         state = .loading
+        selectedSignalIndex = nil
         do {
             async let candlesTask = marketData.fetchCandles(forStockCode: stock.code)
             async let quotesTask = marketData.fetchQuotes(forStockCodes: [stock.code])
+            async let fundTask = marketData.fetchFundamentals(forCode: stock.code)
             let loaded = try await candlesTask
             quote = try await quotesTask[stock.code]
+            fundamentals = try await fundTask
             candles = loaded
             viewport = .forPeriod(period, total: loaded.count)
+            if let kind = selectedIndicator {
+                computeIndicatorSeries()
+                computeSignals(for: kind)
+            }
             state = .loaded
         } catch RepositoryError.notFound {
-            candles = []
-            state = .error("이 종목은 아직 차트 데이터가 없어요.")
+            candles = []; state = .error("이 종목은 아직 차트 데이터가 없어요.")
         } catch {
-            candles = []
-            state = .error("차트를 불러오지 못했어요.")
+            candles = []; state = .error("차트를 불러오지 못했어요.")
         }
+    }
+
+    /// 커밋 6 도메인으로 전체 시리즈 계산(1회).
+    private func computeIndicatorSeries() {
+        guard !candles.isEmpty else { return }
+        maFull = Dictionary(uniqueKeysWithValues: maPeriods.map { ($0, Indicators.simpleMovingAverage(candles, period: $0)) })
+        let bands = Indicators.bollingerBands(candles)
+        bandsFull = (bands.middle, bands.upper, bands.lower)
+        rsiFull = Indicators.relativeStrengthIndex(candles)
+    }
+
+    /// 커밋 6 신호 탐지 → 지표 종류로 필터 → 병합·최근 cap → 번호.
+    private func computeSignals(for kind: IndicatorKind) {
+        let kinds = Set(IndicatorCopy.signalKinds(kind))
+        guard !kinds.isEmpty else { signalEvents = []; return }
+        let detected = ChartSignalDetector.detect(candles).filter { kinds.contains($0.kind) }
+
+        // 5봉 이내 인접 신호 병합(이후 것 유지) → 최근 maxSignals개.
+        var deduped: [ChartSignal] = []
+        for signal in detected {
+            if let last = deduped.last, signal.candleIndex - last.candleIndex < signalMinGap {
+                deduped[deduped.count - 1] = signal
+            } else {
+                deduped.append(signal)
+            }
+        }
+        let recent = Array(deduped.suffix(maxSignals))
+        signalEvents = recent.enumerated().map { offset, signal in
+            SignalEvent(id: offset + 1, candleIndex: signal.candleIndex, kind: signal.kind, direction: signal.subsequentDirection)
+        }
+    }
+
+    private func maColor(_ period: Int) -> Color {
+        switch period {
+        case 5: return AppColor.accent
+        case 20: return AppColor.indicatorMA
+        case 60: return AppColor.indicatorRSI
+        default: return AppColor.textMuted2
+        }
+    }
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }
