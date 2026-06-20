@@ -168,7 +168,7 @@ private struct RankingEntryCard: View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             sectionHeader("랭킹 현황", count: nil)
             NavigationLink {
-                RankingPlaceholderView()
+                RankingView()
             } label: {
                 HStack(spacing: AppSpacing.md) {
                     Image(systemName: "trophy.fill").font(.system(size: 18)).foregroundStyle(AppColor.accent)
@@ -191,21 +191,6 @@ private struct RankingEntryCard: View {
             }
             .buttonStyle(.plain)
         }
-    }
-}
-
-/// 랭킹은 커밋 20 — 지금은 진입점 스텁만.
-private struct RankingPlaceholderView: View {
-    var body: some View {
-        ZStack {
-            AppColor.backgroundPrimary.ignoresSafeArea()
-            VStack(spacing: AppSpacing.md) {
-                Image(systemName: "trophy").font(.system(size: 34)).foregroundStyle(AppColor.textMuted)
-                Text("랭킹은 곧 제공돼요").font(AppFont.focusCardTitle).foregroundStyle(AppColor.ink)
-                Text("보유 자산 기준 순위가 여기에 표시될 예정이에요.").font(AppFont.bodyStrong).foregroundStyle(AppColor.textMuted)
-            }
-        }
-        .navigationTitle("랭킹").navigationBarTitleDisplayMode(.inline)
     }
 }
 

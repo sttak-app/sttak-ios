@@ -69,6 +69,11 @@ enum AppColor {
     static let assetPnLUp = Color(rgb: 0xFF8A5C)    // 다크 카드 수익(+) — 따뜻한 주황
     static let assetPnLDown = Color(rgb: 0x7FA9F0)  // 다크 카드 손실(−) — 부드러운 파랑
 
+    // ── 순위 변동 (랭킹, 1시간 전 대비 — 가격 등락(빨강/파랑)과 다른 색계) ──
+    static let rankUp = Color(rgb: 0x1F8A57)    // 순위 상승 — 초록
+    static let rankDown = Color(rgb: 0xC77E7E)  // 순위 하락 — 로즈
+    static let rankFlat = Color(rgb: 0xBDB6A7)  // 순위 유지 — 회색
+
     // ── 외부 브랜드 ──
     static let kakao = Color(rgb: 0xFEE500)
     static let kakaoText = Color(rgb: 0x3C1E1E)

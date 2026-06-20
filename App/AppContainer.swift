@@ -68,6 +68,15 @@ final class AppContainer: Sendable {
     }
 
     @MainActor
+    func makeRankingViewModel() -> RankingViewModel {
+        RankingViewModel(
+            ranking: ranking,
+            evaluate: EvaluatePortfolio(portfolio: portfolio, market: marketData),
+            auth: auth
+        )
+    }
+
+    @MainActor
     func makeMyViewModel() -> MyViewModel {
         MyViewModel(
             evaluate: EvaluatePortfolio(portfolio: portfolio, market: marketData),
