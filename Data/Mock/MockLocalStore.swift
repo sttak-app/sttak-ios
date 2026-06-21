@@ -94,6 +94,12 @@ actor MockLocalStore {
         quizLastTakenAt = nil
         lastQuizCompletion = nil
     }
+
+    // 디버그 시세 오프셋(원, 종목별) — 차트에서 조정 → 시세 레이어 공유 → 차트·자산요약·마이 일관 반영.
+    private(set) var debugPriceOffsets: [String: Int] = [:]
+    func debugAddPriceOffset(_ delta: Int, for code: String) { debugPriceOffsets[code, default: 0] += delta }
+    func debugPriceOffset(for code: String) -> Int { debugPriceOffsets[code] ?? 0 }
+    func clearDebugPriceOffsets() { debugPriceOffsets = [:] }
     #endif
 
     // MARK: 내부

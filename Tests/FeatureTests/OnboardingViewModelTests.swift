@@ -7,7 +7,7 @@ final class OnboardingViewModelTests: XCTestCase {
 
     private func makeViewModel(store: MockLocalStore = MockLocalStore()) -> (OnboardingViewModel, MockAuthRepository) {
         let auth = MockAuthRepository(store: store)
-        let vm = OnboardingViewModel(auth: auth, marketData: MockMarketDataRepository())
+        let vm = OnboardingViewModel(auth: auth, marketData: MockMarketDataRepository(store: store))
         return (vm, auth)
     }
 

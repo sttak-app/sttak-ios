@@ -33,7 +33,7 @@ final class AppContainer: Sendable {
             let store = MockLocalStore(cash: MockData.seedCash, holdings: MockData.seedHoldings, trades: MockData.seedTrades)
             self.auth = MockAuthRepository(store: store)
             self.news = MockNewsRepository()
-            self.marketData = MockMarketDataRepository()
+            self.marketData = MockMarketDataRepository(store: store)
             self.chat = MockChatRepository()
             self.retrospective = MockRetrospectiveRepository()
             self.quiz = MockQuizRepository(store: store)
@@ -101,7 +101,10 @@ final class AppContainer: Sendable {
 
     @MainActor
     func makeChartLearningViewModel() -> ChartLearningViewModel {
-        ChartLearningViewModel(auth: auth, marketData: marketData, portfolioRepo: portfolio)
+        ChartLearningViewModel(
+            auth: auth, marketData: marketData, portfolioRepo: portfolio,
+            evaluate: EvaluatePortfolio(portfolio: portfolio, market: marketData)
+        )
     }
 
     @MainActor

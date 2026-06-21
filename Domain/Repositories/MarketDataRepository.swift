@@ -16,4 +16,10 @@ protocol MarketDataRepository: Sendable {
     func fetchPopularStocks() async throws -> [Stock]
     /// 종목 기초 정보(시총/PER/PBR). 없으면 nil. 매핑: GET /stocks/{code}/fundamentals.
     func fetchFundamentals(forCode code: String) async throws -> StockFundamentals?
+
+    #if DEBUG
+    /// 디버그 시세 조정(차트). 시세 레이어에 반영되어 차트·자산요약·마이가 일관 갱신된다. release엔 없음.
+    func debugNudgePrice(byPercent percent: Double, forStockCode code: String) async
+    func debugResetPrices() async
+    #endif
 }

@@ -11,13 +11,19 @@ struct ChartLearningView: View {
     @State private var panBaseStart: Int?
     @State private var zoomBaseCount: Int?
     @State private var tradeViewModel: TradeViewModel?
+    @State private var summaryExpanded = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
             AppColor.backgroundPrimary.ignoresSafeArea()
             if let viewModel {
                 content(viewModel)
-                if viewModel.state == .loaded { tradeBar(viewModel) }
+                if viewModel.state == .loaded {
+                    VStack(spacing: 0) {
+                        assetSummaryStrip(viewModel)
+                        tradeBar(viewModel)
+                    }
+                }
             } else {
                 ProgressView().tint(AppColor.accent)
             }
@@ -102,9 +108,53 @@ struct ChartLearningView: View {
                 CoachCard(viewModel: viewModel).padding(.top, AppSpacing.md)
             }
             .padding(.horizontal, AppSpacing.screenHorizontal)
-            .padding(.bottom, 90) // 트레이드 바 회피
+            .padding(.bottom, 150) // 자산 요약 스트립 + 트레이드 바 회피
         }
     }
+
+    // MARK: 자산 요약 스트립 (트레이드 바 위) — EvaluatePortfolio 재사용, 마이와 동일 값
+    @ViewBuilder
+    private func assetSummaryStrip(_ viewModel: ChartLearningViewModel) -> some View {
+        if let v = viewModel.valuation {
+            VStack(spacing: 0) {
+                Button { withAnimation(.snappy) { summaryExpanded.toggle() } } label: {
+                    HStack(spacing: AppSpacing.lg) {
+                        summaryItem("총 자산", "\(Formatters.grouped(v.totalAssets.amount))원", color: AppColor.ink)
+                        summaryItem("총 수익률", Formatters.signedPercent(v.returnRate, fractionDigits: 1), color: assetPnLColor(v.totalReturn.amount))
+                        summaryItem("오늘의 손익", "\(signedWon(v.todaysPnL.amount))원", color: assetPnLColor(v.todaysPnL.amount))
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.up").font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(AppColor.textMuted2).rotationEffect(.degrees(summaryExpanded ? 0 : 180))
+                    }
+                }
+                .buttonStyle(.plain)
+
+                if summaryExpanded {
+                    Divider().overlay(AppColor.hairline2).padding(.vertical, AppSpacing.sm)
+                    HStack(spacing: AppSpacing.lg) {
+                        summaryItem("보유 현금", "\(Formatters.grouped(v.cash.amount))원", color: AppColor.ink)
+                        summaryItem("주식 평가금액", "\(Formatters.grouped(v.stockValue.amount))원", color: AppColor.ink)
+                        summaryItem("매수 가능 금액", "\(Formatters.grouped(v.buyingPower.amount))원", color: AppColor.accentDeep)
+                        Spacer(minLength: 0)
+                    }
+                }
+            }
+            .padding(.horizontal, AppSpacing.screenHorizontal)
+            .padding(.vertical, AppSpacing.sm)
+            .background(.regularMaterial)
+            .overlay(alignment: .top) { Rectangle().fill(AppColor.hairline2).frame(height: 1) }
+        }
+    }
+
+    private func summaryItem(_ label: String, _ value: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label).font(AppFont.microCaption).foregroundStyle(AppColor.textMuted2)
+            Text(value).font(AppFont.number(13)).foregroundStyle(color)
+        }
+    }
+
+    private func assetPnLColor(_ amount: Int) -> Color { amount >= 0 ? AppColor.assetPnLUp : AppColor.assetPnLDown }
+    private func signedWon(_ amount: Int) -> String { (amount >= 0 ? "+" : "") + Formatters.grouped(amount) }
 
     // MARK: 헤더
     @ViewBuilder
@@ -130,9 +180,9 @@ struct ChartLearningView: View {
     private func debugPriceBar(_ viewModel: ChartLearningViewModel) -> some View {
         HStack(spacing: AppSpacing.sm) {
             Text("DEBUG 현재가").font(AppFont.microCaption).foregroundStyle(AppColor.textMuted2)
-            debugButton("-5%") { viewModel.debugAdjustPrice(byPercent: -5) }
-            debugButton("초기화") { viewModel.debugResetPrice() }
-            debugButton("+5%") { viewModel.debugAdjustPrice(byPercent: 5) }
+            debugButton("-5%") { Task { await viewModel.debugAdjustPrice(byPercent: -5) } }
+            debugButton("초기화") { Task { await viewModel.debugResetPrice() } }
+            debugButton("+5%") { Task { await viewModel.debugAdjustPrice(byPercent: 5) } }
             Spacer()
         }
         .padding(.vertical, AppSpacing.xs)

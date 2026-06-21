@@ -17,15 +17,20 @@ struct EvaluatePortfolio: Sendable {
         let quotes = codes.isEmpty ? [:] : try await market.fetchQuotes(forStockCodes: codes)
         let stocks = codes.isEmpty ? [] : try await market.fetchStocks(forCodes: codes)
         let prices = quotes.mapValues(\.price)
+        let previousCloses = quotes.mapValues(\.previousClose)
         let names = Dictionary(stocks.map { ($0.code, $0.name) }, uniquingKeysWith: { first, _ in first })
 
-        return Self.evaluate(portfolio: snapshot, prices: prices, names: names, startingCapital: Self.startingCapital)
+        return Self.evaluate(
+            portfolio: snapshot, prices: prices, previousCloses: previousCloses,
+            names: names, startingCapital: Self.startingCapital
+        )
     }
 
-    /// 순수 평가(현재가·이름 주입). 가격 없는 보유는 평가에서 제외.
+    /// 순수 평가(현재가·전일종가·이름 주입). 가격 없는 보유는 평가에서 제외.
     static func evaluate(
         portfolio: Portfolio,
         prices: [String: Money],
+        previousCloses: [String: Money] = [:],
         names: [String: String],
         startingCapital: Int
     ) -> PortfolioValuation {
@@ -49,6 +54,11 @@ struct EvaluatePortfolio: Sendable {
 
         let stockValue = positions.reduce(0) { $0 + $1.marketValue.amount }
         let unrealized = positions.reduce(0) { $0 + $1.unrealizedPnL.amount }
+        // 오늘의 손익 = Σ (현재가 − 전일종가) × 수량. 전일종가 없으면 0(변동 없음으로 간주).
+        let todays = portfolio.holdings.reduce(0) { sum, holding in
+            guard let price = prices[holding.stockCode], let prev = previousCloses[holding.stockCode] else { return sum }
+            return sum + (price.amount - prev.amount) * holding.quantity
+        }
         let total = portfolio.cash.amount + stockValue
         let totalReturn = total - startingCapital
         let rate = startingCapital > 0 ? Double(totalReturn) / Double(startingCapital) * 100 : 0
@@ -58,6 +68,7 @@ struct EvaluatePortfolio: Sendable {
             stockValue: .krw(stockValue),
             totalAssets: .krw(total),
             unrealizedPnL: .krw(unrealized),
+            todaysPnL: .krw(todays),
             totalReturn: .krw(totalReturn),
             returnRate: rate,
             positions: positions

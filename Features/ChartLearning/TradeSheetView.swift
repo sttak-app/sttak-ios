@@ -40,6 +40,14 @@ struct TradeSheetView: View {
                     closeButton
                 }
 
+                if viewModel.type == .buy {
+                    HStack(spacing: AppSpacing.xs) {
+                        Text("매수 가능 금액").font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
+                        Text("\(Formatters.grouped(viewModel.buyingPower.amount))원").font(AppFont.number(13)).foregroundStyle(AppColor.accentDeep)
+                        Spacer()
+                    }
+                }
+
                 quantitySection
                 amountRow
 

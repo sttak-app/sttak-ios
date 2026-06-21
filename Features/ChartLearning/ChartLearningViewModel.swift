@@ -32,12 +32,14 @@ final class ChartLearningViewModel {
     private(set) var selectedSignalIndex: Int?
 
     private(set) var portfolio: Portfolio?
+    private(set) var valuation: PortfolioValuation?     // 자산 요약(EvaluatePortfolio 재사용 — 마이와 동일)
     private(set) var tradeIntent: TradeIntent?
     private var tradeCounter = 0
 
     private let auth: AuthRepository
     private let marketData: MarketDataRepository
     private let portfolioRepo: PortfolioRepository
+    private let evaluate: EvaluatePortfolio
 
     // 도메인 전체 시리즈 캐시(뷰포트 변경 시 재계산 안 함)
     private var maFull: [Int: [Double?]] = [:]
@@ -48,10 +50,16 @@ final class ChartLearningViewModel {
     private let maxSignals = 4
     private let signalMinGap = 5
 
-    init(auth: AuthRepository, marketData: MarketDataRepository, portfolioRepo: PortfolioRepository) {
+    init(
+        auth: AuthRepository,
+        marketData: MarketDataRepository,
+        portfolioRepo: PortfolioRepository,
+        evaluate: EvaluatePortfolio
+    ) {
         self.auth = auth
         self.marketData = marketData
         self.portfolioRepo = portfolioRepo
+        self.evaluate = evaluate
     }
 
     /// 매수/매도 시트 진입 의도.
@@ -73,27 +81,9 @@ final class ChartLearningViewModel {
         return portfolio?.holdings.first { $0.stockCode == code }?.quantity ?? 0
     }
 
-    /// 표시·거래에 쓰는 현재가. DEBUG에선 오프셋이 반영된 값(이익/손실 회고 확인용), release에선 원 시세.
-    var displayPrice: Money? {
-        guard let price = quote?.price else { return nil }
-        #if DEBUG
-        return .krw(max(1, price.amount + debugPriceOffset))
-        #else
-        return price
-        #endif
-    }
-
-    /// 표시 등락률. DEBUG 오프셋만큼 함께 움직여 일관성 유지.
-    var displayChangePercent: Double? {
-        guard let quote else { return nil }
-        #if DEBUG
-        let base = quote.price.amount
-        let offsetPercent = base > 0 ? Double(debugPriceOffset) / Double(base) * 100 : 0
-        return quote.changePercent + offsetPercent
-        #else
-        return quote.changePercent
-        #endif
-    }
+    /// 표시·거래에 쓰는 현재가. DEBUG 오프셋은 시세 레이어(MockMarketDataRepository)에 이미 반영됨.
+    var displayPrice: Money? { quote?.price }
+    var displayChangePercent: Double? { quote?.changePercent }
 
     func openBuy() {
         guard let stock = selectedStock, let price = displayPrice else { return }
@@ -108,21 +98,36 @@ final class ChartLearningViewModel {
     }
 
     #if DEBUG
-    /// 디버그 현재가 오프셋(원). 회고 win/loss를 앱에서 직접 확인하기 위한 도구.
-    private(set) var debugPriceOffset = 0
-
-    func debugAdjustPrice(byPercent percent: Double) {
-        guard let base = quote?.price.amount else { return }
-        debugPriceOffset += Int((Double(base) * percent / 100).rounded())
+    /// 디버그 현재가 ±% 조정(시세 레이어에 반영 → 차트·자산요약·마이 일관). win/loss 회고·자산요약 확인용.
+    func debugAdjustPrice(byPercent percent: Double) async {
+        guard let code = selectedStock?.code else { return }
+        await marketData.debugNudgePrice(byPercent: percent, forStockCode: code)
+        await refreshAfterPriceChange()
     }
 
-    func debugResetPrice() { debugPriceOffset = 0 }
+    func debugResetPrice() async {
+        await marketData.debugResetPrices()
+        await refreshAfterPriceChange()
+    }
+
+    private func refreshAfterPriceChange() async {
+        if let code = selectedStock?.code {
+            quote = try? await marketData.fetchQuotes(forStockCodes: [code])[code]
+        }
+        await refreshValuation()
+    }
     #endif
 
     func dismissTrade() { tradeIntent = nil }
 
     func onTradeCompleted() async {
         portfolio = try? await portfolioRepo.fetchPortfolio()
+        await refreshValuation()
+    }
+
+    /// 자산 요약 갱신 — EvaluatePortfolio 재사용(재계산 금지).
+    func refreshValuation() async {
+        valuation = try? await evaluate()
     }
 
     var visibleCandles: [Candle] {
@@ -140,6 +145,7 @@ final class ChartLearningViewModel {
             stocks = try await marketData.fetchStocks(forCodes: user?.watchlistCodes ?? [])
             guard !stocks.isEmpty else { state = .error("관심종목을 먼저 추가해 주세요."); return }
             portfolio = try? await portfolioRepo.fetchPortfolio()
+            await refreshValuation()
             await loadCandles()
         } catch {
             state = .error("차트를 불러오지 못했어요.")

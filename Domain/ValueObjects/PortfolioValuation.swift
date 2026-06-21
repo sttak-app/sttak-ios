@@ -19,7 +19,11 @@ struct PortfolioValuation: Sendable, Equatable {
     let stockValue: Money       // Σ 보유 평가금액
     let totalAssets: Money      // cash + stockValue
     let unrealizedPnL: Money    // Σ 보유 미실현손익
+    let todaysPnL: Money        // Σ (현재가 − 전일종가) × 수량
     let totalReturn: Money      // totalAssets − 시작 자본
     let returnRate: Double      // totalReturn / 시작 자본 × 100
     let positions: [PositionValuation]
+
+    /// 매수 가능 금액 = 보유 현금. (Mock은 결제 지연 없음 — 라벨만 다름)
+    var buyingPower: Money { cash }
 }

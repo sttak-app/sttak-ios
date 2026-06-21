@@ -22,7 +22,7 @@ private func _domainSmokeCheck() {
         originalURL: URL(string: "https://example.com"),
         lead: "삼성전자가 2나노 공정 기반 위탁생산 계약을 체결했다고 공시했다..."
     )
-    _ = Quote(price: .krw(71_200), changePercent: 1.78, sparkline: [68, 70, 71.2])
+    _ = Quote(price: .krw(71_200), previousClose: .krw(70_000), changePercent: 1.78, sparkline: [68, 70, 71.2])
     _ = Candle(date: Date(), open: 70, high: 73, low: 69, close: 71.2, volume: 1_200_000)
     _ = IndicatorKind.rsi
     _ = ChartSignal(kind: .goldenCross, candleIndex: 42, subsequentDirection: .up)

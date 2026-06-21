@@ -23,6 +23,30 @@ final class PortfolioValuationTests: XCTestCase {
         XCTAssertEqual(v.positions.first?.returnRate ?? 0, 200.0 / 1_100.0 * 100, accuracy: 0.0001)
     }
 
+    func testValuation_todaysPnL_usesPreviousClose() {
+        // 현재가 1300·전일종가 1250·10주 → 오늘의 손익 = (1300−1250)×10 = +500.
+        // (미실현은 평단 1100 기준 +2,000과 별개)
+        let portfolio = Portfolio(cash: .krw(1_000_000), holdings: [
+            Holding(stockCode: "X", quantity: 10, averagePrice: .krw(1_100)),
+        ])
+        let v = EvaluatePortfolio.evaluate(
+            portfolio: portfolio, prices: ["X": .krw(1_300)], previousCloses: ["X": .krw(1_250)],
+            names: [:], startingCapital: 10_000_000
+        )
+        XCTAssertEqual(v.todaysPnL.amount, 500)
+        XCTAssertEqual(v.unrealizedPnL.amount, 2_000)
+    }
+
+    func testValuation_todaysPnL_zeroWithoutPreviousClose() {
+        let portfolio = Portfolio(cash: .krw(1_000_000), holdings: [
+            Holding(stockCode: "X", quantity: 10, averagePrice: .krw(1_100)),
+        ])
+        let v = EvaluatePortfolio.evaluate(
+            portfolio: portfolio, prices: ["X": .krw(1_300)], names: [:], startingCapital: 10_000_000
+        )
+        XCTAssertEqual(v.todaysPnL.amount, 0) // 전일종가 없으면 0
+    }
+
     func testValuation_multiPosition_sumsAndLoss() {
         // 삼성 10@67,800 → 73,400, SK 3@195,000 → 198,500. cash 8,738,000.
         // stockValue = 10×73,400 + 3×198,500 = 734,000 + 595,500 = 1,329,500

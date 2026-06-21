@@ -25,6 +25,7 @@ final class TradeViewModel {
     var rationaleText = ""
     private(set) var maxQuantity = 1
     private(set) var averageCost = Money.krw(0)
+    private(set) var buyingPower = Money.krw(0)   // 매수 가능 금액 = 보유 현금
     private(set) var phase: Phase = .input
     private(set) var errorMessage: String?
 
@@ -73,6 +74,7 @@ final class TradeViewModel {
 
     func load() async {
         guard let portfolio = try? await portfolio.fetchPortfolio() else { return }
+        buyingPower = portfolio.cash
         let holding = portfolio.holdings.first { $0.stockCode == stockCode }
         switch type {
         case .buy:
