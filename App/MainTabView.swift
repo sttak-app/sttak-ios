@@ -3,6 +3,7 @@ import SwiftUI
 /// 인증 후 메인 셸. 핸드오프 확정 4탭(홈·차트학습·퀴즈·마이). 랭킹은 별도 탭이 아니라
 /// 마이 안에서 진입한다.
 struct MainTabView: View {
+    var onSignedOut: () -> Void = {}
     @State private var selection: Tab = .home
 
     enum Tab: Hashable {
@@ -20,7 +21,7 @@ struct MainTabView: View {
             QuizView(onGoToChart: { selection = .chart }, onGoToRanking: { selection = .my })
                 .tabItem { Label("퀴즈", systemImage: "checkmark.circle") }
                 .tag(Tab.quiz)
-            MyView()
+            MyView(onSignedOut: onSignedOut)
                 .tabItem { Label("마이", systemImage: "person") }
                 .tag(Tab.my)
         }

@@ -13,7 +13,7 @@ struct RootView: View {
             case .unauthenticated:
                 OnboardingFlowView(onComplete: { viewModel?.completeOnboarding() })
             case .authenticated:
-                MainTabView()
+                MainTabView(onSignedOut: { viewModel?.handleSignedOut() })
             }
         }
         .animation(.easeInOut(duration: 0.35), value: viewModel?.phase)

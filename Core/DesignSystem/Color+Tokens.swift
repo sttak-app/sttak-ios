@@ -84,6 +84,9 @@ enum AppColor {
     static let wrong = Color(rgb: 0xDC5B52)
     static let wrongTint = Color(rgb: 0xFCEDEB)
 
+    /// 파괴적 액션(로그아웃·회원탈퇴). 핸드오프 #B6485F — 절제된 로즈레드.
+    static let destructive = Color(rgb: 0xB6485F)
+
     // ── 차트 지표 팔레트 (참고용 — 최종 적용은 차트 커밋에서) ──
     static let indicatorInfo = Color(rgb: 0x8A8478)        // 정보(시총/PER/PBR)
     static let indicatorSupportResist = Color(rgb: 0x3A6DE8) // 지지·저항

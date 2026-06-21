@@ -41,6 +41,11 @@ final class RootViewModel {
         phase = .authenticated
     }
 
+    /// 로그아웃/회원탈퇴 완료(설정에서) → 로그인으로. 실제 auth.signOut/deleteAccount는 SettingsViewModel이 수행.
+    func handleSignedOut() {
+        phase = .unauthenticated
+    }
+
     private func resolveAuth() async {
         let user = try? await auth.currentUser()
         phase = (user != nil) ? .authenticated : .unauthenticated

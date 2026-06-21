@@ -82,6 +82,11 @@ final class AppContainer: Sendable {
     }
 
     @MainActor
+    func makeSettingsViewModel() -> SettingsViewModel {
+        SettingsViewModel(auth: auth)
+    }
+
+    @MainActor
     func makeMyViewModel() -> MyViewModel {
         MyViewModel(
             evaluate: EvaluatePortfolio(portfolio: portfolio, market: marketData),

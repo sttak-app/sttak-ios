@@ -22,6 +22,19 @@ actor MockLocalStore {
     // MARK: 인증
     func setUser(_ newUser: User?) { user = newUser }
 
+    /// 회원탈퇴 — 로컬 상태 전부 초기화(영구 삭제 시뮬레이션).
+    func eraseAccountData() {
+        user = nil
+        cash = MockData.initialCash
+        holdings = []
+        trades = []
+        quizLastTakenAt = nil
+        lastQuizCompletion = nil
+        #if DEBUG
+        debugPriceOffsets = [:]
+        #endif
+    }
+
     // MARK: 포트폴리오
     func portfolioSnapshot() -> Portfolio { Portfolio(cash: .krw(cash), holdings: holdings) }
     func allTrades() -> [Trade] { trades.reversed() } // 최신순

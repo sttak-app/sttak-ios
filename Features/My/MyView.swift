@@ -4,6 +4,7 @@ import SwiftUI
 struct MyView: View {
     @Environment(\.container) private var container
     @State private var viewModel: MyViewModel?
+    var onSignedOut: () -> Void = {}
 
     var body: some View {
         NavigationStack {
@@ -17,6 +18,15 @@ struct MyView: View {
             }
             .navigationTitle("마이")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        SettingsView(onSignedOut: onSignedOut)
+                    } label: {
+                        Image(systemName: "gearshape").foregroundStyle(AppColor.inkSoft)
+                    }
+                }
+            }
         }
         .task {
             if viewModel == nil {

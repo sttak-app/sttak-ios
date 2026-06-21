@@ -36,4 +36,9 @@ struct MockAuthRepository: AuthRepository {
     func signOut() async throws {
         await store.setUser(nil)
     }
+
+    func deleteAccount() async throws {
+        // Mock: 로컬 상태 전부 클리어. (Live: 서버가 계정·데이터 삭제 + Apple 토큰 revoke)
+        await store.eraseAccountData()
+    }
 }
