@@ -191,13 +191,31 @@ final class ChartLearningViewModel {
 
     func toggleExplanation() { explanationOpen.toggle() }
 
-    /// 코치 사례/마커 → 그 시점으로 차트 이동 + 선택.
+    /// 코치 예시/마커 → 그 시점으로 차트 이동 + 선택.
     func focusSignal(candleIndex: Int) {
         let count = min(80, max(44, viewport.count))
         let start = candleIndex - count / 2
         viewport = .clamped(start: start, count: count, total: candles.count)
         selectedSignalIndex = candleIndex
     }
+
+    // MARK: 예시 navigator (신호 이벤트 재사용)
+    /// 현재 보고 있는 예시 번호(1..). 미선택이면 nil.
+    var currentExampleNumber: Int? {
+        selectedSignalIndex.flatMap { idx in signalEvents.first { $0.candleIndex == idx }?.id }
+    }
+    var exampleCount: Int { signalEvents.count }
+
+    /// 다음 예시로 순환 이동.
+    func nextExample() {
+        guard !signalEvents.isEmpty else { return }
+        let current = currentExampleNumber ?? 0
+        let nextID = (current % signalEvents.count) + 1
+        if let next = signalEvents.first(where: { $0.id == nextID }) { focusSignal(candleIndex: next.candleIndex) }
+    }
+
+    /// 예시 선택 해제 → 용어(설명·예시 목록)로 돌아가기. 오버레이는 유지.
+    func backToTerm() { selectedSignalIndex = nil }
 
     /// 차트 탭(날짜) → 그 봉에 신호가 있으면 선택.
     func selectCandle(at date: Date) {

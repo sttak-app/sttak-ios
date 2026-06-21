@@ -71,6 +71,8 @@ enum IndicatorCopy {
         case .rsiOversold: return "RSI 과매도(30↓)"
         case .bollingerUpperTouch: return "위 띠 터치"
         case .bollingerLowerTouch: return "아래 띠 터치"
+        case .supportBounce: return "지지선 반등"
+        case .resistanceReject: return "저항선 눌림"
         }
     }
 
@@ -88,6 +90,10 @@ enum IndicatorCopy {
             return "가격이 볼린저밴드 위쪽 띠에 닿았어요. 단기적으로 과열로 보는 자리예요."
         case .bollingerLowerTouch:
             return "가격이 볼린저밴드 아래쪽 띠에 닿았어요. 단기적으로 과매도로 보는 자리예요."
+        case .supportBounce:
+            return "가격이 바닥 부근까지 내려왔다가 다시 올라선 자리예요. 이 근처를 ‘지지선’이라고 불러요."
+        case .resistanceReject:
+            return "가격이 천장 부근까지 올라갔다가 다시 눌린 자리예요. 이 근처를 ‘저항선’이라고 불러요."
         }
     }
 
@@ -122,7 +128,8 @@ enum IndicatorCopy {
         case .movingAverage: return [.goldenCross, .deadCross]
         case .rsi: return [.rsiOverbought, .rsiOversold]
         case .bollingerBands: return [.bollingerUpperTouch, .bollingerLowerTouch]
-        case .info, .supportResistance, .volume: return []
+        case .supportResistance: return [.supportBounce, .resistanceReject]
+        case .info, .volume: return []
         }
     }
 }

@@ -99,7 +99,11 @@ struct ChartLearningView: View {
                 #endif
 
                 if let detail = viewModel.selectedSignalDetail {
-                    SignalDetailCard(detail: detail).padding(.top, AppSpacing.md)
+                    VStack(spacing: AppSpacing.sm) {
+                        SignalDetailCard(detail: detail)
+                        exampleNav(viewModel, number: detail.number)
+                    }
+                    .padding(.top, AppSpacing.md)
                 } else if !viewModel.signalEvents.isEmpty {
                     signalHint.padding(.top, AppSpacing.md)
                 }
@@ -262,9 +266,42 @@ struct ChartLearningView: View {
     private var signalHint: some View {
         HStack(spacing: AppSpacing.sm) {
             Circle().fill(AppColor.accent).frame(width: 14, height: 14)
-            Text("색칠된 구간이 과거에 이 신호가 나왔던 사례예요")
+            Text("색칠된 구간이 과거에 이 신호가 나왔던 예시예요")
                 .font(AppFont.bodyStrong).foregroundStyle(AppColor.textMuted)
         }
+    }
+
+    // MARK: 예시 navigator (선택된 예시 아래 — 같은 화면 in-place)
+    private func exampleNav(_ viewModel: ChartLearningViewModel, number: Int) -> some View {
+        HStack(spacing: AppSpacing.sm) {
+            Button { viewModel.backToTerm() } label: {
+                navLabel("용어로 돌아가기", systemImage: "chevron.left", leading: true)
+            }
+            .buttonStyle(.plain)
+            Spacer()
+            Text("예시 \(number) / \(viewModel.exampleCount)")
+                .font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
+            Spacer()
+            if viewModel.exampleCount > 1 {
+                Button { viewModel.nextExample() } label: {
+                    navLabel("다음 예시", systemImage: "chevron.right", leading: false)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Color.clear.frame(width: 1)
+            }
+        }
+    }
+
+    private func navLabel(_ title: String, systemImage: String, leading: Bool) -> some View {
+        HStack(spacing: AppSpacing.xs) {
+            if leading { Image(systemName: systemImage).font(.system(size: 11, weight: .bold)) }
+            Text(title).font(AppFont.metaCaption)
+            if !leading { Image(systemName: systemImage).font(.system(size: 11, weight: .bold)) }
+        }
+        .foregroundStyle(AppColor.accentDeep)
+        .padding(.horizontal, AppSpacing.md).padding(.vertical, AppSpacing.sm)
+        .background(AppColor.accentTintSoft).clipShape(Capsule())
     }
 
     // MARK: 지표 칩
@@ -401,18 +438,19 @@ private struct CoachCard: View {
 
     private var eventList: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("차트에 표시된 과거 사례").font(AppFont.bodyStrong).foregroundStyle(AppColor.inkSoft)
-            Text("번호를 누르면 그 시점으로 차트가 이동해요").font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
+            Text("예시 — 실제로 이 신호가 떴던 자리").font(AppFont.bodyStrong).foregroundStyle(AppColor.inkSoft)
+            Text("예시를 누르면 그 구간으로 차트가 이동해요").font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
             ForEach(viewModel.signalEvents) { event in
                 Button { viewModel.focusSignal(candleIndex: event.candleIndex) } label: {
                     HStack(spacing: AppSpacing.md) {
                         numberBadge(event.id)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(IndicatorCopy.signalLabel(event.kind)).font(AppFont.bodyStrong).foregroundStyle(AppColor.ink)
+                            Text("예시 \(event.id) · \(IndicatorCopy.signalLabel(event.kind))").font(AppFont.bodyStrong).foregroundStyle(AppColor.ink)
                             Text(IndicatorCopy.directionLabel(event.direction))
                                 .font(AppFont.metaCaption).foregroundStyle(IndicatorCopy.directionColor(event.direction))
                         }
                         Spacer()
+                        Image(systemName: "arrow.right.circle").font(.system(size: 16)).foregroundStyle(AppColor.accentDeep)
                     }
                     .padding(AppSpacing.md)
                     .frame(maxWidth: .infinity, alignment: .leading)

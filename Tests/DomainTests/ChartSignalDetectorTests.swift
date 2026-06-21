@@ -70,6 +70,33 @@ final class ChartSignalDetectorTests: XCTestCase {
 
     // MARK: 엣지
 
+    // MARK: 지지/저항 (스윙 저점·고점)
+
+    func testSupportBounce_atSwingLow() {
+        // V자: 바닥(index 10, 100)이 ±5 안에서 최저 + 양 끝보다 낮음 → 지지선 반등.
+        let closes: [Double] = [120, 118, 116, 114, 112, 110, 108, 106, 104, 102, 100,
+                                102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122]
+        let support = ChartSignalDetector.detect(makeCandles(closes)).filter { $0.kind == .supportBounce }
+        XCTAssertEqual(support.map(\.candleIndex), [10])
+        XCTAssertEqual(support.first?.subsequentDirection, .up) // 바닥 이후 반등
+    }
+
+    func testResistanceReject_atSwingHigh() {
+        // 역V자: 천장(index 10, 120)이 ±5 안에서 최고 + 양 끝보다 높음 → 저항선 눌림.
+        let closes: [Double] = [100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120,
+                                118, 116, 114, 112, 110, 108, 106, 104, 102, 100, 98]
+        let resist = ChartSignalDetector.detect(makeCandles(closes)).filter { $0.kind == .resistanceReject }
+        XCTAssertEqual(resist.map(\.candleIndex), [10])
+        XCTAssertEqual(resist.first?.subsequentDirection, .down) // 천장 이후 하락
+    }
+
+    func testFlatInput_noSupportResistance() {
+        // 평탄 구간은 골/봉우리가 아니므로 지지/저항 신호 없음.
+        let sr = ChartSignalDetector.detect(makeCandles(Array(repeating: 100.0, count: 30)))
+            .filter { $0.kind == .supportBounce || $0.kind == .resistanceReject }
+        XCTAssertTrue(sr.isEmpty)
+    }
+
     func testEdge_shortInput_noSignals() {
         XCTAssertTrue(ChartSignalDetector.detect(makeCandles([1, 2, 3])).isEmpty)
         XCTAssertTrue(ChartSignalDetector.detect([]).isEmpty)

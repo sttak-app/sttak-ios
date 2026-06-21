@@ -8,6 +8,8 @@ enum ChartSignalKind: Sendable, Equatable, CaseIterable {
     case rsiOversold          // RSI 과매도(30↓)
     case bollingerUpperTouch  // 볼린저 위 띠 터치
     case bollingerLowerTouch  // 볼린저 아래 띠 터치
+    case supportBounce        // 지지선 부근 반등(스윙 저점)
+    case resistanceReject     // 저항선 부근 눌림(스윙 고점)
 }
 
 /// 신호 이후 가격 흐름 방향.

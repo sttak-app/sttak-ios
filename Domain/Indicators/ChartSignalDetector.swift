@@ -24,6 +24,8 @@ enum ChartSignalDetector {
     static let minimumIndex = 5               // 워밍업 가드
     /// 평탄 구간(sd≈0) 억제: 밴드 폭이 가격 대비 이 비율보다 작으면 터치를 신호로 보지 않는다.
     static let bollingerMinBandFraction = 0.002
+    /// 지지/저항 스윙 고저점 좌우 비교 폭(±swingWindow 안에서 최저/최고면 스윙점).
+    static let swingWindow = 5
 
     static func detect(_ candles: [Candle]) -> [ChartSignal] {
         let n = candles.count
@@ -65,6 +67,24 @@ enum ChartSignalDetector {
                 appendSignal(&signals, .bollingerUpperTouch, at: i, in: candles)
             } else if close <= lower {
                 appendSignal(&signals, .bollingerLowerTouch, at: i, in: candles)
+            }
+        }
+
+        // 지지/저항 — 스윙 저점(지지선 반등) / 스윙 고점(저항선 눌림).
+        // 양 끝보다 엄격히 낮/높아야 진짜 골/봉우리(평탄 구간 배제).
+        if n > 2 * swingWindow {
+            for i in swingWindow..<(n - swingWindow) {
+                let window = (i - swingWindow)...(i + swingWindow)
+                let low = candles[i].low, high = candles[i].high
+                let isSwingLow = window.allSatisfy { candles[$0].low >= low }
+                    && candles[i - swingWindow].low > low && candles[i + swingWindow].low > low
+                let isSwingHigh = window.allSatisfy { candles[$0].high <= high }
+                    && candles[i - swingWindow].high < high && candles[i + swingWindow].high < high
+                if isSwingLow {
+                    appendSignal(&signals, .supportBounce, at: i, in: candles)
+                } else if isSwingHigh {
+                    appendSignal(&signals, .resistanceReject, at: i, in: candles)
+                }
             }
         }
 
@@ -112,6 +132,8 @@ enum ChartSignalDetector {
         case .rsiOversold: return 3
         case .bollingerUpperTouch: return 4
         case .bollingerLowerTouch: return 5
+        case .supportBounce: return 6
+        case .resistanceReject: return 7
         }
     }
 }
