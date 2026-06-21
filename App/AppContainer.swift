@@ -68,6 +68,11 @@ final class AppContainer: Sendable {
     }
 
     @MainActor
+    func makeChatViewModel() -> ChatViewModel {
+        ChatViewModel(chat: chat, context: .free, greeting: MockData.freeChatGreeting)
+    }
+
+    @MainActor
     func makeRankingViewModel() -> RankingViewModel {
         RankingViewModel(
             ranking: ranking,

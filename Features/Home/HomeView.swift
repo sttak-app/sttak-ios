@@ -5,6 +5,8 @@ struct HomeView: View {
     @Environment(\.container) private var container
     @State private var viewModel: HomeViewModel?
     @State private var detailViewModel: NewsDetailViewModel?
+    @State private var chatViewModel: ChatViewModel?
+    @State private var showChat = false
 
     var body: some View {
         ZStack {
@@ -14,6 +16,9 @@ struct HomeView: View {
             } else {
                 ProgressView().tint(AppColor.accent)
             }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if viewModel != nil { aiButton }
         }
         .task {
             if viewModel == nil {
@@ -26,11 +31,35 @@ struct HomeView: View {
                 NewsDetailView(viewModel: detailViewModel, onClose: { viewModel?.dismissNewsDetail() })
             }
         }
+        .bottomSheet(isPresented: $showChat) {
+            if let chatViewModel {
+                ChatView(viewModel: chatViewModel, onClose: { showChat = false })
+            }
+        }
         .onChange(of: viewModel?.presentedNews?.id) { _, newID in
             if newID != nil, let presented = viewModel?.presentedNews {
                 detailViewModel = container.makeNewsDetailViewModel(news: presented.news, stockName: presented.stockName)
             }
         }
+    }
+
+    /// 떠있는 "AI에게 묻기" 버튼(우하단). 탭 → 공용 챗봇 시트.
+    private var aiButton: some View {
+        Button {
+            if chatViewModel == nil { chatViewModel = container.makeChatViewModel() }
+            showChat = true
+        } label: {
+            HStack(spacing: AppSpacing.xs) {
+                Image(systemName: "sparkles").font(.system(size: 14)).foregroundStyle(AppColor.accentBright)
+                Text("AI에게 묻기").font(AppFont.metaCaption).foregroundStyle(.white)
+            }
+            .padding(.horizontal, AppSpacing.md).padding(.vertical, AppSpacing.sm)
+            .background(AppColor.ink.opacity(0.92), in: Capsule())
+            .appShadow(AppShadow.card)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, AppSpacing.screenHorizontal)
+        .padding(.bottom, AppSpacing.lg)
     }
 
     private var sheetBinding: Binding<Bool> {
