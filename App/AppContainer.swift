@@ -1,13 +1,23 @@
 import SwiftUI
 
-/// Mock/Live 전환 seam. 기본은 Mock. Live 와이어링은 OpenAPI 스펙 확정까지 보류.
+/// Mock/Live 전환 seam. 앱 실행은 Info.plist `STTAK_ENV`(기본 live), 프리뷰·테스트는 Mock.
 enum AppEnvironment {
     case mock
     case live
 
     static var current: AppEnvironment {
-        // 단일 전환 지점 — 나중에 런치 인자/빌드 설정으로 Live 선택.
-        ProcessInfo.processInfo.arguments.contains("-useLive") ? .live : .mock
+        // 우선순위: 런치 인자 > 프리뷰/테스트 자동 Mock > Info.plist STTAK_ENV > live.
+        let process = ProcessInfo.processInfo
+        if process.arguments.contains("-useLive") { return .live }
+        if process.arguments.contains("-useMock") { return .mock }
+        // 유닛테스트·SwiftUI 프리뷰는 네트워크 없이 결정적으로 — 항상 Mock.
+        if process.environment["XCTestConfigurationFilePath"] != nil { return .mock }
+        if process.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" { return .mock }
+        switch (Bundle.main.object(forInfoDictionaryKey: "STTAK_ENV") as? String)?.lowercased() {
+        case "mock": return .mock
+        case "live": return .live
+        default: return .live
+        }
     }
 }
 
@@ -26,9 +36,7 @@ final class AppContainer: Sendable {
 
     init(environment: AppEnvironment = .current) {
         switch environment {
-        case .mock, .live:
-            // ⬇︎ 여기가 Mock→Live 교체의 단일 지점. 지금은 전부 Mock.
-            //   (OpenAPI 확정 후 .live 분기에서 Live* 구현으로 바꾸면 됨)
+        case .mock:
             // 시드: "이미 써 온 사용자" 초기 상태(보유·매매기록·회고). 트레이드/퀴즈는 이 store를 공유.
             let store = MockLocalStore(cash: MockData.seedCash, holdings: MockData.seedHoldings, trades: MockData.seedTrades)
             self.auth = MockAuthRepository(store: store)
@@ -38,6 +46,30 @@ final class AppContainer: Sendable {
             self.retrospective = MockRetrospectiveRepository()
             self.quiz = MockQuizRepository(store: store)
             self.portfolio = MockPortfolioRepository(store: store)
+            self.ranking = MockRankingRepository()
+
+        case .live:
+            // Live 와이어링: 인증·뉴스·시세(부분)·퀴즈·챗봇은 서버.
+            // 포트폴리오·회고·랭킹 + 캔들·기초정보는 서버 미구현이라 Mock 유지.
+            let config = AppConfig.default
+            let tokenStore = KeychainTokenStore()
+            let api = APIClient(config: config, tokenStore: tokenStore)
+            let store = MockLocalStore(cash: MockData.seedCash, holdings: MockData.seedHoldings, trades: MockData.seedTrades)
+            let mockMarket = MockMarketDataRepository(store: store)
+            let portfolio = MockPortfolioRepository(store: store)
+
+            self.auth = LiveAuthRepository(
+                api: api,
+                tokenStore: tokenStore,
+                socialLogin: KakaoLoginService(isConfigured: config.isKakaoConfigured)
+            )
+            self.news = LiveNewsRepository(api: api)
+            self.marketData = LiveMarketDataRepository(api: api, fallback: mockMarket)
+            self.chat = LiveChatRepository(api: api)
+            self.retrospective = MockRetrospectiveRepository()
+            // 퀴즈 보상은 서버가 적립 — 포트폴리오 Live 전까지 로컬 현금에 미러링.
+            self.quiz = LiveQuizRepository(api: api, localCapitalMirror: portfolio)
+            self.portfolio = portfolio
             self.ranking = MockRankingRepository()
         }
     }

@@ -34,6 +34,18 @@ struct LoginView: View {
                     SocialLoginButton(style: .apple, title: "Apple로 계속하기") { login(.apple) }
                     SocialLoginButton(style: .google, title: "Google로 계속하기") { login(.google) }
 
+                    // 카카오 키 미설정(플레이스홀더) 동안의 dev 폴백 — X-User-Id 헤더 인증.
+                    if !AppConfig.default.isKakaoConfigured {
+                        Button { login(.dev) } label: {
+                            Text("개발자 로그인")
+                                .font(AppFont.metaCaption)
+                                .foregroundStyle(AppColor.textMuted)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 36)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
                     if let error = viewModel.loginError {
                         Text(error)
                             .font(AppFont.microCaption)
