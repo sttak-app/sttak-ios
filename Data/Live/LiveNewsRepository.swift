@@ -6,9 +6,10 @@ struct LiveNewsRepository: NewsRepository {
 
     func fetchNews(forStockCodes codes: [String]) async throws -> [String: [NewsItem]] {
         guard !codes.isEmpty else { return [:] }
-        let byCode: [String: [NewsItemDTO]] = try await api.request(
+        // 서버 응답은 {feed, fetchedAt} 엔벨로프(NewsFeedResponse) — feed 만 도메인으로 매핑한다.
+        let dto: NewsFeedDTO = try await api.request(
             .get("/api/v1/news", query: [URLQueryItem(name: "codes", value: codes.joined(separator: ","))])
         )
-        return byCode.mapValues { items in items.map { $0.toDomain() } }
+        return dto.feed.mapValues { items in items.map { $0.toDomain() } }
     }
 }
