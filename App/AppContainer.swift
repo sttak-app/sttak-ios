@@ -97,11 +97,7 @@ final class AppContainer: Sendable {
 
     @MainActor
     func makeQuizViewModel() -> QuizViewModel {
-        QuizViewModel(
-            score: ScoreQuizAndAwardCapital(portfolio: portfolio, quiz: quiz),
-            quiz: quiz,
-            portfolio: portfolio
-        )
+        QuizViewModel(quiz: quiz, portfolio: portfolio)
     }
 
     @MainActor

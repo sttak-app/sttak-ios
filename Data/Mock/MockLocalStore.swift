@@ -30,6 +30,9 @@ actor MockLocalStore {
         trades = []
         quizLastTakenAt = nil
         lastQuizCompletion = nil
+        quizCycleAnswered = 0
+        quizCycleCorrect = 0
+        quizCycleEarned = 0
         #if DEBUG
         debugPriceOffsets = [:]
         #endif
@@ -96,16 +99,41 @@ actor MockLocalStore {
     // MARK: 퀴즈/자본금
     func addCapital(_ amount: Int) { cash += amount }
 
-    /// 퀴즈 결과 기록(쿨다운 + 지난 세트 보관). 자본금 적립은 별도(creditCash).
-    func recordQuizResult(correctCount: Int, earnedCapital: Money, takenAt: Date) {
+    /// 진행 중 퀴즈 사이클(문항별 채점) 상태 — 서버의 answeredInCycle을 로컬로 재현.
+    private(set) var quizCycleAnswered = 0
+    private(set) var quizCycleCorrect = 0
+    private(set) var quizCycleEarned = 0
+
+    /// 문항 하나 채점 반영. 정답이면 자본금도 적립(서버가 submit 시점에 적립하는 동작을 미러링).
+    func recordQuizAnswer(isCorrect: Bool, reward: Int) {
+        quizCycleAnswered += 1
+        if isCorrect {
+            quizCycleCorrect += 1
+            quizCycleEarned += reward
+            cash += reward
+        }
+    }
+
+    /// 사이클(3문제) 완료 — 쿨다운 시작 + 지난 세트 요약 보관, 진행 상태 리셋.
+    func completeQuizCycle(takenAt: Date) {
         quizLastTakenAt = takenAt
-        lastQuizCompletion = QuizCompletion(takenAt: takenAt, correctCount: correctCount, earnedCapital: earnedCapital)
+        lastQuizCompletion = QuizCompletion(
+            takenAt: takenAt,
+            correctCount: quizCycleCorrect,
+            earnedCapital: .krw(quizCycleEarned)
+        )
+        quizCycleAnswered = 0
+        quizCycleCorrect = 0
+        quizCycleEarned = 0
     }
 
     #if DEBUG
     func clearQuizCooldown() {
         quizLastTakenAt = nil
         lastQuizCompletion = nil
+        quizCycleAnswered = 0
+        quizCycleCorrect = 0
+        quizCycleEarned = 0
     }
 
     // 디버그 시세 오프셋(원, 종목별) — 차트에서 조정 → 시세 레이어 공유 → 차트·자산요약·마이 일관 반영.

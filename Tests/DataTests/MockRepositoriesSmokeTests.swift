@@ -84,20 +84,23 @@ final class MockRepositoriesSmokeTests: XCTestCase {
         }
     }
 
-    func testQuizScore_creditsCapitalIntoSharedPortfolio() async throws {
+    func testQuizSubmit_creditsCapitalIntoSharedPortfolio() async throws {
         let store = MockLocalStore(cash: 10_000_000)
         let portfolio = MockPortfolioRepository(store: store)
         let quiz = MockQuizRepository(store: store)
-        let score = ScoreQuizAndAwardCapital(portfolio: portfolio, quiz: quiz)
 
-        let set = try await quiz.currentQuizSet()
-        XCTAssertEqual(set.questions.count, 3)
-
-        let allCorrect = set.questions.map(\.answerIndex)
-        let outcome = try await score(quizSet: set, selectedAnswers: allCorrect, now: Date(timeIntervalSince1970: 1_000))
-
-        XCTAssertEqual(outcome.correctCount, 3)
-        XCTAssertEqual(outcome.earnedCapital.amount, 3 * 500_000)
+        // 문항별 제출(전부 정답) — 서버처럼 submit 시점에 적립.
+        for i in 0..<MockData.quizQuestions.count {
+            guard case let .question(pending, _, total) = try await quiz.nextQuestion() else {
+                return XCTFail("문항 \(i)에서 쿨다운이 반환됨")
+            }
+            XCTAssertEqual(total, 3)
+            let result = try await quiz.submitAnswer(
+                quizId: pending.id,
+                selectedIndex: MockData.quizQuestions[i].answerIndex
+            )
+            XCTAssertTrue(result.isCorrect)
+        }
 
         // 자본금이 공유 store의 포트폴리오 현금에 반영 + 쿨다운 기록.
         let p = try await portfolio.fetchPortfolio()
@@ -106,16 +109,28 @@ final class MockRepositoriesSmokeTests: XCTestCase {
         XCTAssertEqual(last?.correctCount, 3)
     }
 
-    func testQuizScore_partialCorrect_earnsProportionally() async throws {
+    func testQuizSubmit_partialCorrect_earnsProportionally() async throws {
         let store = MockLocalStore()
         let quiz = MockQuizRepository(store: store)
-        let score = ScoreQuizAndAwardCapital(portfolio: MockPortfolioRepository(store: store), quiz: quiz)
-        let set = try await quiz.currentQuizSet()
-        // 첫 문제만 정답, 나머지 오답(정답이 0이므로 1을 제출).
-        let answers = [set.questions[0].answerIndex, 1, 1]
-        let outcome = try await score(quizSet: set, selectedAnswers: answers, now: Date(timeIntervalSince1970: 1_000))
-        XCTAssertEqual(outcome.correctCount, 1)
-        XCTAssertEqual(outcome.earnedCapital.amount, 500_000)
+
+        // 첫 문제만 정답, 나머지 오답.
+        var earned = 0
+        var correctCount = 0
+        for i in 0..<MockData.quizQuestions.count {
+            guard case let .question(pending, _, _) = try await quiz.nextQuestion() else {
+                return XCTFail("문항 \(i)에서 쿨다운이 반환됨")
+            }
+            let answer = MockData.quizQuestions[i].answerIndex
+            let selected = i == 0 ? answer : (answer + 1) % pending.options.count
+            let result = try await quiz.submitAnswer(quizId: pending.id, selectedIndex: selected)
+            earned += result.earnedCapital.amount
+            if result.isCorrect { correctCount += 1 }
+        }
+        XCTAssertEqual(correctCount, 1)
+        XCTAssertEqual(earned, 500_000)
+        let last = try await quiz.lastCompletion()
+        XCTAssertEqual(last?.correctCount, 1)
+        XCTAssertEqual(last?.earnedCapital.amount, 500_000)
     }
 
     func testAuthSignIn_persistsCurrentUser() async throws {

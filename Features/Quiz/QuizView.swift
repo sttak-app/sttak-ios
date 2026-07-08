@@ -113,7 +113,7 @@ private struct PlayingView: View {
 
             if let question = viewModel.currentQuestion {
                 questionCard(question)
-                if viewModel.isRevealed { explanation(question) }
+                if let revealed = viewModel.revealedAnswer { explanation(revealed) }
             }
 
             PrimaryButton(viewModel.primaryButtonLabel, state: viewModel.primaryButtonEnabled ? .enabled : .disabled) {
@@ -122,14 +122,17 @@ private struct PlayingView: View {
         }
     }
 
-    private func questionCard(_ question: QuizQuestion) -> some View {
+    private func questionCard(_ question: PendingQuizQuestion) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.lg) {
-            HStack(spacing: AppSpacing.xs) {
-                Circle().fill(categoryColor(question.category)).frame(width: 6, height: 6)
-                Text(question.category).font(AppFont.badge).foregroundStyle(categoryColor(question.category))
+            // 카테고리는 서버 스펙에 없어 optional — 있을 때만 배지 표시.
+            if let category = question.category {
+                HStack(spacing: AppSpacing.xs) {
+                    Circle().fill(categoryColor(category)).frame(width: 6, height: 6)
+                    Text(category).font(AppFont.badge).foregroundStyle(categoryColor(category))
+                }
+                .padding(.horizontal, AppSpacing.md).padding(.vertical, AppSpacing.xs)
+                .background(categoryColor(category).opacity(0.12)).clipShape(Capsule())
             }
-            .padding(.horizontal, AppSpacing.md).padding(.vertical, AppSpacing.xs)
-            .background(categoryColor(question.category).opacity(0.12)).clipShape(Capsule())
 
             Text(question.question)
                 .font(AppFont.quizQuestion).foregroundStyle(AppColor.ink).lineSpacing(5)
@@ -148,8 +151,8 @@ private struct PlayingView: View {
         .appShadow(AppShadow.card)
     }
 
-    private func optionRow(question: QuizQuestion, index: Int, option: String) -> some View {
-        let state = optionState(question: question, index: index)
+    private func optionRow(question: PendingQuizQuestion, index: Int, option: String) -> some View {
+        let state = optionState(index: index)
         return Button { viewModel.selectOption(index) } label: {
             HStack(spacing: AppSpacing.md) {
                 Text(["A", "B", "C", "D"][index])
@@ -173,24 +176,25 @@ private struct PlayingView: View {
         .disabled(viewModel.isRevealed)
     }
 
-    private func explanation(_ question: QuizQuestion) -> some View {
+    private func explanation(_ revealed: QuizViewModel.RevealedAnswer) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             HStack(spacing: AppSpacing.sm) {
-                Text(viewModel.wasCurrentCorrect ? "정답" : "오답")
+                Text(revealed.isCorrect ? "정답" : "오답")
                     .font(AppFont.badge).foregroundStyle(.white)
                     .padding(.horizontal, AppSpacing.sm).padding(.vertical, 3)
-                    .background(viewModel.wasCurrentCorrect ? AppColor.correct : AppColor.wrong)
+                    .background(revealed.isCorrect ? AppColor.correct : AppColor.wrong)
                     .clipShape(RoundedRectangle(cornerRadius: AppRadius.badge))
-                if viewModel.wasCurrentCorrect {
-                    Text("+\(Formatters.grouped(QuizReward.capitalPerCorrect))원 자본금")
+                if revealed.isCorrect {
+                    // 적립액은 서버 채점 응답 값(earnedCapital)을 그대로 표시.
+                    Text("+\(Formatters.grouped(revealed.earnedCapital.amount))원 자본금")
                         .font(AppFont.number(13)).foregroundStyle(AppColor.correct)
                 }
             }
-            Text(question.explanation).font(AppFont.bodyStrong).foregroundStyle(AppColor.inkSoft).lineSpacing(3)
+            Text(revealed.explanation).font(AppFont.bodyStrong).foregroundStyle(AppColor.inkSoft).lineSpacing(3)
         }
         .padding(AppSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(viewModel.wasCurrentCorrect ? AppColor.correctTint : AppColor.wrongTint)
+        .background(revealed.isCorrect ? AppColor.correctTint : AppColor.wrongTint)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
     }
 
@@ -201,10 +205,10 @@ private struct PlayingView: View {
         var textColor: Color; var mark: String?; var markColor: Color
     }
 
-    private func optionState(question: QuizQuestion, index: Int) -> OptionStyle {
+    private func optionState(index: Int) -> OptionStyle {
         let isSelected = viewModel.selectedOption == index
-        if viewModel.isRevealed {
-            if index == question.answerIndex {
+        if let revealed = viewModel.revealedAnswer {
+            if index == revealed.correctIndex {
                 return OptionStyle(background: AppColor.correctTint, border: AppColor.correct,
                                    keyBackground: AppColor.correct, keyBorder: .clear, keyForeground: .white,
                                    textColor: AppColor.ink, mark: "checkmark", markColor: AppColor.correct)
@@ -249,7 +253,7 @@ private struct DoneView: View {
                     .font(.system(size: 30, weight: .bold)).foregroundStyle(resultColor)
                     .frame(width: 66, height: 66).background(resultColor.opacity(0.14)).clipShape(Circle())
                 Text(resultTitle).font(AppFont.resultTitle).foregroundStyle(AppColor.ink)
-                Text("3문제 중 \(correct)문제를 맞혔어요").font(AppFont.body).foregroundStyle(AppColor.textMuted)
+                Text("\(viewModel.totalCount)문제 중 \(correct)문제를 맞혔어요").font(AppFont.body).foregroundStyle(AppColor.textMuted)
             }
             .padding(.top, AppSpacing.lg)
 
