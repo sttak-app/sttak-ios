@@ -5,6 +5,8 @@ enum AuthProvider: Sendable, Equatable {
     case kakao
     case google
     case apple
+    /// dev 전용 폴백(카카오 키 준비 전 X-User-Id 헤더 인증). 정식 배포 전 제거 대상.
+    case dev
 }
 
 /// 사용자. 관심종목 최대 개수는 도메인 상수로 둔다(매직넘버 금지).
