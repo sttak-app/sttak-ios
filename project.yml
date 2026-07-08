@@ -1,0 +1,133 @@
+# XcodeGen 선언 — 이 파일이 프로젝트 구조의 단일 진실원.
+# 파일/폴더를 추가·이동한 뒤 `xcodegen generate` 를 실행하면 sttak.xcodeproj 가 재생성됨.
+# .xcodeproj 는 생성물이라 .gitignore 로 추적하지 않음.
+
+name: sttak
+
+packages:
+  # 카카오 로그인(KakaoSDKAuth/KakaoSDKUser). 키는 Configs/Secrets.xcconfig 로컬 주입 — 코드/커밋 금지.
+  KakaoOpenSDK:
+    url: https://github.com/kakao/kakao-ios-sdk
+    from: "2.22.0"
+
+options:
+  bundleIdPrefix: com.sttak
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # 개인 개발팀 미설정 상태로 시뮬레이터 빌드 가능. 실기기 빌드 시 Xcode에서 팀 선택.
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  sttak:
+    type: application
+    platform: iOS
+    # MVP 진행에 따라 Data/Features 폴더를 아래에 추가 등록한다.
+    sources:
+      - path: App
+      - path: Core
+      - path: Domain
+      - path: Data
+      - path: Features
+      - path: Resources/Fonts
+        excludes:
+          - "README.md"   # 문서는 번들에 넣지 않음 (폰트/라이선스만 번들)
+    dependencies:
+      - package: KakaoOpenSDK
+        products:
+          - KakaoSDKAuth
+          - KakaoSDKUser
+    # 카카오 네이티브 앱 키 주입(placeholder). 실제 키는 Configs/Secrets.xcconfig(로컬 전용)로 오버라이드.
+    configFiles:
+      Debug: Configs/Kakao.xcconfig
+      Release: Configs/Kakao.xcconfig
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sttak.app
+        PRODUCT_NAME: sttak
+        # UIAppFonts 등록을 위해 명시적 Info.plist 사용 (아래 info: 블록).
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1"  # iPhone 전용
+    # 생성물 Info.plist (project.yml 이 SSOT, App/Info.plist 는 .gitignore 로 제외)
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: sttak
+        UILaunchScreen: {}
+        # 백엔드 환경 선택(live|mock). 프리뷰·유닛테스트는 코드에서 자동 Mock.
+        STTAK_ENV: live
+        # dev ALB 베이스 URL(HTTP). 코드 기본값과 동일 — 필요 시 여기서 오버라이드.
+        STTAK_API_BASE_URL: "http://sttak-dev-alb-709489725.ap-northeast-2.elb.amazonaws.com"
+        # 카카오 네이티브 앱 키 — Configs/Secrets.xcconfig 의 빌드 설정에서 주입.
+        KAKAO_NATIVE_APP_KEY: "$(KAKAO_NATIVE_APP_KEY)"
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - "kakao$(KAKAO_NATIVE_APP_KEY)"   # 카카오 로그인 콜백 스킴
+        LSApplicationQueriesSchemes:              # 카카오톡 앱 설치 여부 조회
+          - kakaokompassauth
+          - kakaolink
+        # ⚠️ dev 전용 ATS 예외 — dev ALB가 HTTP뿐이라 허용. 운영(HTTPS) 전환 시 반드시 제거.
+        NSAppTransportSecurity:
+          NSExceptionDomains:
+            sttak-dev-alb-709489725.ap-northeast-2.elb.amazonaws.com:
+              NSExceptionAllowsInsecureHTTPLoads: true
+              NSIncludesSubdomains: false
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        # 커스텀 폰트 등록 — 파일명 기준(번들 루트에 복사됨)
+        UIAppFonts:
+          - Pretendard-Regular.otf
+          - Pretendard-Medium.otf
+          - Pretendard-SemiBold.otf
+          - Pretendard-Bold.otf
+          - SpaceGrotesk-Regular.ttf
+          - SpaceGrotesk-Medium.ttf
+          - SpaceGrotesk-SemiBold.ttf
+          - SpaceGrotesk-Bold.ttf
+
+  sttakTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: sttak
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sttak.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+  # dev 백엔드 대상 E2E(개발자 로그인→온보딩→홈→퀴즈). 로컬/시연용 — CI 필수 아님.
+  sttakUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: sttak
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sttak.app.uitests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  sttak:
+    build:
+      targets:
+        sttak: all
+        sttakTests: [test]
+        sttakUITests: [test]
+    test:
+      targets:
+        - sttakTests
+        - sttakUITests

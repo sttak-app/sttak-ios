@@ -1,73 +1,58 @@
-# macOS
-
+# ───────── macOS ─────────
 .DS_Store
 
-# Xcode user data
-
+# ───────── Xcode user data ─────────
 xcuserdata/
 *.xcuserstate
 *.xcscmblueprint
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
 
-# Xcode build files
+# ───────── XcodeGen ─────────
+# project.yml 이 단일 진실원. 생성물 .xcodeproj 는 추적하지 않는다.
+# (클론 후 `brew install xcodegen && xcodegen generate` 로 생성)
+*.xcodeproj/
+# XcodeGen 이 생성하는 Info.plist (project.yml 이 SSOT)
+App/Info.plist
 
+# ───────── Build artifacts ─────────
 DerivedData/
 build/
 Build/
 *.build/
 
-# Xcode workspace user data
-
-*.xcworkspace/xcuserdata/
-
-# Xcode project user data
-
-*.xcodeproj/xcuserdata/
-*.xcodeproj/project.xcworkspace/xcuserdata/
-
-# Swift Package Manager
-
+# ───────── Swift Package Manager ─────────
 .swiftpm/
 .build/
+Package.resolved
 
-# CocoaPods
-
+# ───────── CocoaPods / Carthage (미사용, 보호용) ─────────
 Pods/
-
-# Carthage
-
 Carthage/Build/
 
-# Fastlane
-
+# ───────── Fastlane ─────────
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output/
 
-# App packages
-
+# ───────── App packages ─────────
 *.ipa
 *.dSYM.zip
 *.dSYM
 
-# Environment variables
-
+# ───────── Secrets (절대 커밋 금지) ─────────
 .env
 .env.*
 !.env.example
-
-# Secrets
-
 *.p8
 *.cer
 *.mobileprovision
 *.provisionprofile
+Secrets.xcconfig
 
-# Logs
-
+# ───────── Logs / temp ─────────
 *.log
-
-# Temporary files
-
 tmp/
 temp/

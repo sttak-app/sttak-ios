@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  div, span, p, h1, h2, h3 { word-break: keep-all; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  @keyframes scPulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.82); } }
+  @keyframes scToast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+</style>
+</helmet>
+
+<div style="width: max-content; min-width: 100%; min-height: 100vh; box-sizing: border-box; padding: 52px; background: #ECE9E2; font-family: 'Pretendard', -apple-system, sans-serif; color: #26241F; display:flex; justify-content:center;">
+
+  <div style="position:relative; width: 417px; height: 876px; background:#0C0C0D; border-radius: 56px; padding: 12px; box-shadow: 0 24px 60px rgba(40,36,28,0.22), inset 0 0 0 2px #2b2b2e;">
+    <div style="position:relative; width: 393px; height: 852px; border-radius: 45px; overflow:hidden; background:#F7F4EE;">
+
+      <!-- status bar -->
+      <div style="position:absolute; top:0; left:0; right:0; height:54px; display:flex; align-items:center; justify-content:space-between; padding: 0 30px 0 32px; z-index:40;">
+        <div style="font-size:16px; font-weight:700; color:#26241F; font-family:'Space Grotesk',sans-serif; letter-spacing:0.02em;">9:41</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <div style="display:flex; align-items:flex-end; gap:2px; height:11px;">
+            <div style="width:3px; height:5px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:7px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:9px; background:#26241F; border-radius:1px;"></div>
+            <div style="width:3px; height:11px; background:#26241F; border-radius:1px;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:2px;">
+            <div style="width:23px; height:12px; border:1.5px solid #26241F; border-radius:3.5px; padding:1.5px;"><div style="width:100%; height:100%; background:#26241F; border-radius:1.5px;"></div></div>
+            <div style="width:1.5px; height:4px; background:#26241F; border-radius:0 1px 1px 0;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute; top:13px; left:50%; transform:translateX(-50%); width:124px; height:35px; background:#000; border-radius:20px; z-index:45;"></div>
+      <div style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:#26241F; opacity:0.82; z-index:45;"></div>
+
+      <div style="position:absolute; inset:0; display:flex; flex-direction:column; z-index:5;">
+
+        <!-- header -->
+        <div style="padding:60px 18px 8px; display:flex; align-items:center; gap:6px;">
+          <div onClick="{{ goBack }}" style="width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; margin-left:-6px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#26241F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </div>
+          <div style="font-size:24px; font-weight:700; letter-spacing:-0.02em;">랭킹</div>
+          <div style="flex:1;"></div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div style="width:7px; height:7px; border-radius:50%; background:#2E9E5B; animation: scPulse 1.8s ease-in-out infinite;"></div>
+            <div style="font-size:11.5px; font-weight:600; color:#8A8478; white-space:nowrap;">{{ agoStr }} 업데이트</div>
+          </div>
+        </div>
+
+        <!-- mode toggle -->
+        <div style="padding:8px 18px 4px;">
+          <div style="display:flex; gap:4px; background:#E9E5DC; border-radius:12px; padding:3px;">
+            <div onClick="{{ pickAsset }}" style="flex:1; text-align:center; padding:9px 0; border-radius:9px; font-size:13.5px; font-weight:700; cursor:pointer; background:{{ assetBg }}; color:{{ assetColor }}; box-shadow:{{ assetSh }};">보유 자산</div>
+            <div onClick="{{ pickPoints }}" style="flex:1; text-align:center; padding:9px 0; border-radius:9px; font-size:13.5px; font-weight:700; cursor:pointer; background:{{ pointsBg }}; color:{{ pointsColor }}; box-shadow:{{ pointsSh }};">누적 포인트</div>
+          </div>
+        </div>
+
+        <!-- scroll body -->
+        <div style="flex:1; overflow-y:auto; padding:12px 18px 40px;">
+
+          <!-- my rank hero -->
+          <div style="background:#26241F; border-radius:22px; padding:20px; position:relative; overflow:hidden;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="display:inline-flex; align-items:center; gap:6px; background:{{ tierTintDim }}; padding:4px 11px 4px 9px; border-radius:999px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="{{ tierColor }}"><path d="M5 16L3 5l5.5 4L12 4l3.5 5L21 5l-2 11z"></path></svg>
+                <div style="font-size:11.5px; font-weight:700; color:{{ tierColor }}; white-space:nowrap;">{{ tierName }} 리그</div>
+              </div>
+              <div style="flex:1;"></div>
+              <div style="font-size:11.5px; color:#9A968B; font-weight:600;">전체 {{ totalUsersStr }}명</div>
+            </div>
+
+            <div style="display:flex; align-items:flex-end; gap:14px; margin-top:18px;">
+              <div>
+                <div style="font-size:12px; color:#9A968B; font-weight:600; margin-bottom:4px;">내 순위</div>
+                <div style="display:flex; align-items:baseline; gap:3px;">
+                  <div style="font-size:13px; color:#C9C4B8; font-weight:700;">#</div>
+                  <div style="font-size:34px; font-weight:700; color:#fff; font-family:'Space Grotesk',sans-serif; letter-spacing:-0.01em; line-height:1;">{{ myRankStr }}</div>
+                </div>
+              </div>
+              <div style="flex:1;"></div>
+              <div style="text-align:right;">
+                <div style="font-size:12px; color:#9A968B; font-weight:600; margin-bottom:4px;">{{ metricLabel }}</div>
+                <div style="display:flex; align-items:baseline; gap:4px; justify-content:flex-end;">
+                  <div style="font-size:21px; font-weight:700; color:{{ tierColor }}; font-family:'Space Grotesk',sans-serif;">{{ myValStr }}</div>
+                  <div style="font-size:12px; color:#C9C4B8; font-weight:600;">{{ unit }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px; margin-top:16px;">
+              <div style="flex:1; height:7px; border-radius:999px; background:rgba(255,255,255,0.12); overflow:hidden;">
+                <div style="height:100%; width:{{ pctBarW }}; background:linear-gradient(90deg,#0FA39A,#37C9BD); border-radius:999px;"></div>
+              </div>
+              <div style="font-size:12px; font-weight:700; color:#37C9BD; font-family:'Space Grotesk',sans-serif; white-space:nowrap;">상위 {{ topPctStr }}%</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:7px; margin-top:13px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#37C9BD" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+              <div style="font-size:12.5px; color:#C9C4B8;">이번 주 <span style="color:#fff; font-weight:700;">{{ weekDeltaStr }}</span> · {{ nextHintStr }}</div>
+            </div>
+          </div>
+
+          <!-- list header -->
+          <div style="display:flex; align-items:center; padding:22px 6px 10px;">
+            <div style="font-size:14px; font-weight:700; white-space:nowrap;">상위 랭커</div>
+            <div style="flex:1;"></div>
+            <div style="font-size:11.5px; color:#A39D8E;">순위 변동은 1시간 전 대비</div>
+          </div>
+
+          <div style="background:#FFFFFF; border-radius:18px; padding:5px 6px; box-shadow:0 1px 3px rgba(40,36,28,0.06);">
+            <sc-for list="{{ top }}" as="u" hint-placeholder-count="8">
+              <div style="display:flex; align-items:center; gap:11px; padding:11px 9px; border-bottom:{{ u.border }};">
+                <div style="flex:none; width:30px; display:flex; justify-content:center;">
+                  <sc-if value="{{ u.isMedal }}" hint-placeholder-val="{{ false }}">
+                    <div style="width:26px; height:26px; border-radius:50%; background:{{ u.medalTint }}; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; color:{{ u.medalColor }}; font-family:'Space Grotesk',sans-serif;">{{ u.rank }}</div>
+                  </sc-if>
+                  <sc-if value="{{ u.isNum }}" hint-placeholder-val="{{ true }}">
+                    <div style="font-size:14px; font-weight:700; color:#A39D8E; font-family:'Space Grotesk',sans-serif;">{{ u.rank }}</div>
+                  </sc-if>
+                </div>
+                <div style="flex:none; width:34px; height:34px; border-radius:50%; background:{{ u.av }}; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff;">{{ u.initial }}</div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:14.5px; font-weight:700; color:#26241F; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ u.name }}</div>
+                  <div style="font-size:11px; color:#A39D8E; margin-top:1px;">{{ u.sub }}</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:14.5px; font-weight:700; color:#26241F; font-family:'Space Grotesk',sans-serif;">{{ u.valStr }}<span style="font-size:11px; color:#A39D8E; font-weight:600;"> {{ unit }}</span></div>
+                </div>
+                <div style="flex:none; width:34px; display:flex; align-items:center; justify-content:flex-end; gap:2px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="{{ u.chgColor }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ u.chgOpacity }};"><polyline points="{{ u.chgPath }}"></polyline></svg>
+                  <div style="font-size:11px; font-weight:700; color:{{ u.chgColor }}; font-family:'Space Grotesk',sans-serif;">{{ u.chgNum }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- my row -->
+          <div style="display:flex; align-items:center; justify-content:center; gap:5px; padding:14px 0 12px;">
+            <div style="width:3px; height:3px; border-radius:50%; background:#CFC8BA;"></div>
+            <div style="width:3px; height:3px; border-radius:50%; background:#CFC8BA;"></div>
+            <div style="width:3px; height:3px; border-radius:50%; background:#CFC8BA;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:11px; padding:13px 14px; border-radius:16px; background:#E7F3F0; border:1.5px solid #BFE3DC;">
+            <div style="flex:none; width:30px; text-align:center; font-size:14px; font-weight:700; color:#0E7E77; font-family:'Space Grotesk',sans-serif;">{{ myRankStr }}</div>
+            <div style="flex:none; width:34px; height:34px; border-radius:50%; background:#0FA39A; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff;">{{ myInitial }}</div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div style="font-size:14.5px; font-weight:700; color:#0E5F58;">{{ myName }}</div>
+                <div style="font-size:10px; font-weight:700; color:#0E7E77; background:#D3EBE5; padding:1.5px 6px; border-radius:6px;">나</div>
+              </div>
+              <div style="font-size:11px; color:#5E9189; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ tierName }} 리그 · 12일 연속 학습</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:14.5px; font-weight:700; color:#0E5F58; font-family:'Space Grotesk',sans-serif;">{{ myValStr }}<span style="font-size:11px; color:#5E9189; font-weight:600;"> {{ unit }}</span></div>
+            </div>
+            <div style="flex:none; width:34px; display:flex; align-items:center; justify-content:flex-end; gap:2px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1F8A57" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+              <div style="font-size:11px; font-weight:700; color:#1F8A57; font-family:'Space Grotesk',sans-serif;">{{ myChgStr }}</div>
+            </div>
+          </div>
+
+          <!-- earn-more nudge -->
+          <div onClick="{{ goQuiz }}" style="display:flex; align-items:center; gap:13px; margin-top:16px; background:#FFFFFF; border-radius:16px; padding:15px 16px; box-shadow:0 1px 3px rgba(40,36,28,0.06); cursor:pointer;">
+            <div style="flex:none; width:38px; height:38px; border-radius:11px; background:#E1F2F0; display:flex; align-items:center; justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0FA39A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.2 9a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5M12 17h.01"></path></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:700; color:#26241F;">퀴즈로 순위 올리기</div>
+              <div style="font-size:12px; color:#8A8478; margin-top:2px;">정답마다 모의 자본금이 쌓여 순위가 올라가요</div>
+            </div>
+            <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#C9C2B4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><polyline points="1 1 7 7 1 13"></polyline></svg>
+          </div>
+
+          <div style="text-align:center; font-size:11px; color:#B8B2A4; margin-top:18px; line-height:1.6;">순위는 실시간으로 갱신돼요 · 모의 데이터 기준</div>
+
+        </div>
+
+        <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; bottom:40px; left:50%; transform:translateX(-50%); background:#26241F; color:#fff; padding:11px 18px; border-radius:999px; font-size:13.5px; font-weight:600; z-index:60; animation: scToast 0.25s ease; white-space:nowrap;">{{ toast }}</div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:960}}">
+class Component extends DCLogic {
+  state = { mode: 'asset', now: Date.now(), baseTs: Date.now(), toast: '' };
+
+  PRICES = {
+    '005930': { price: 71200 }, '000660': { price: 198500 }, '035420': { price: 215000 }, '035720': { price: 47150 }, '005380': { price: 248000 }
+  };
+
+  NAMES = ['우상향중', '복리요정', '존버의신', '가치투자가', '차트마스터', '꾸준왕', '배당모으기', '분할매수러', '퀀트입문', '월급방어전', '단타졸업생', '관심종목왕'];
+  CHG = [1, -1, 2, 0, 1, -2, 3, 0, 1, -1, 2, 0];
+  AVS = ['#C99A4B', '#5B8DEF', '#0FA39A', '#B6748F', '#E0A33A', '#6E8B6A', '#8E7CC3', '#4FA8A0', '#C97B6B', '#7B95C9', '#5BAE7E', '#B08D57'];
+  ASSET_TOP = [16420000, 15880000, 15210000, 14760000, 14300000, 13950000, 13510000, 13200000, 12940000, 12610000, 12330000, 12080000];
+  POINT_TOP = [9240, 8710, 8330, 7950, 7420, 7010, 6680, 6240, 5870, 5510, 5180, 4920];
+
+  componentDidMount() {
+    this._t = setInterval(() => {
+      const now = Date.now();
+      let base = this.state.baseTs;
+      if (now - base > 18000) base = now;
+      this.setState({ now, baseTs: base });
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  myAsset() {
+    let cash = 10000000, trades = [];
+    try { const p = JSON.parse(localStorage.getItem('sttak_port') || 'null'); if (p && p.cash != null) cash = p.cash; } catch (e) {}
+    try { trades = JSON.parse(localStorage.getItem('sttak_trades') || '[]') || []; } catch (e) {}
+    const hold = {}, cq = {}, cs = {};
+    trades.slice().reverse().forEach(t => {
+      if (t.type === '매수') { hold[t.code] = (hold[t.code] || 0) + t.qty; cq[t.code] = (cq[t.code] || 0) + t.qty; cs[t.code] = (cs[t.code] || 0) + t.qty * t.price; }
+      else { const prev = hold[t.code] || 0; const ratio = prev > 0 ? Math.max(0, prev - t.qty) / prev : 0; hold[t.code] = prev - t.qty; cs[t.code] = (cs[t.code] || 0) * ratio; cq[t.code] = Math.max(0, hold[t.code]); }
+    });
+    let stock = 0;
+    Object.keys(hold).forEach(c => { if (hold[c] > 0 && this.PRICES[c]) stock += hold[c] * this.PRICES[c].price; });
+    // if no trades recorded, assume a representative portfolio value
+    if (!trades.length) stock = 951500;
+    return cash + stock;
+  }
+  myPoints() { return parseInt(localStorage.getItem('sttak_points') || '1240', 10) || 1240; }
+
+  pick(m) { this.setState({ mode: m }); }
+  flash(m) { this.setState({ toast: m }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 1800); }
+  nav(file) { window.location.href = encodeURI(file); }
+
+  ago(ms) { const s = Math.floor(ms / 1000); if (s < 5) return '방금'; if (s < 60) return s + '초 전'; return Math.floor(s / 60) + '분 전'; }
+
+  renderVals() {
+    const fmt = n => Math.round(n).toLocaleString('ko-KR');
+    const mode = this.state.mode;
+    const isAsset = mode === 'asset';
+
+    const myVal = isAsset ? this.myAsset() : this.myPoints();
+    const tops = isAsset ? this.ASSET_TOP : this.POINT_TOP;
+    const totalUsers = 14820;
+    const topPct = isAsset ? 12 : 17;
+    const myRank = Math.max(13, Math.round(totalUsers * topPct / 100));
+
+    // tier from points
+    const pts = this.myPoints();
+    const tiers = [['브론즈', 0, 500, '#CDA873'], ['실버', 500, 1000, '#AEB4BA'], ['골드', 1000, 2000, '#E0B43C'], ['플래티넘', 2000, 3500, '#46C2B6'], ['다이아', 3500, 99999, '#6FA0F2']];
+    const tIdx = Math.max(0, tiers.findIndex(t => pts >= t[1] && pts < t[2]));
+    const ti = tiers[tIdx];
+    const tierName = ti[0], tierColor = ti[3];
+
+    const medalTints = ['#FBF1D9', '#EEF0F1', '#F4ECDF'];
+    const medalColors = ['#C99A2B', '#8A9097', '#B0824A'];
+
+    const top = tops.map((v, i) => {
+      const chg = this.CHG[i];
+      const up = chg > 0, flat = chg === 0;
+      return {
+        rank: i + 1, isMedal: i < 3, isNum: i >= 3,
+        medalTint: medalTints[i] || 'transparent', medalColor: medalColors[i] || '#A39D8E',
+        av: this.AVS[i], initial: this.NAMES[i].charAt(0), name: this.NAMES[i],
+        sub: isAsset ? ('수익률 +' + (((v - 10000000) / 10000000 * 100).toFixed(1)) + '%') : (this.tierFor(v) + ' 리그'),
+        valStr: fmt(v),
+        chgColor: flat ? '#BDB6A7' : (up ? '#1F8A57' : '#C77E7E'),
+        chgPath: flat ? '6 12 18 12' : (up ? '18 15 12 9 6 15' : '6 9 12 15 18 9'),
+        chgNum: flat ? '' : Math.abs(chg), chgOpacity: flat ? 0.7 : 1,
+        border: i < tops.length - 1 ? '1px solid #F4F0E8' : 'none'
+      };
+    });
+
+    const ms = this.state.now - this.state.baseTs;
+    const weekDelta = isAsset ? '+420,000원' : '+120 P';
+    const nextHint = isAsset ? ('상위 10%까지 ' + fmt(Math.max(0, tops[tops.length - 1] - myVal > 0 ? 1340000 : 1340000)) + '원') : ('다음 등급까지 ' + fmt(Math.max(0, ti[2] - pts)) + 'P');
+
+    return {
+      agoStr: this.ago(ms),
+      assetBg: isAsset ? '#FFFFFF' : 'transparent', assetColor: isAsset ? '#26241F' : '#8C8676', assetSh: isAsset ? '0 1px 2px rgba(40,36,28,0.12)' : 'none',
+      pointsBg: !isAsset ? '#FFFFFF' : 'transparent', pointsColor: !isAsset ? '#26241F' : '#8C8676', pointsSh: !isAsset ? '0 1px 2px rgba(40,36,28,0.12)' : 'none',
+      tierName, tierColor, tierTintDim: 'rgba(255,255,255,0.10)',
+      totalUsersStr: fmt(totalUsers),
+      myRankStr: fmt(myRank), metricLabel: isAsset ? '내 보유 자산' : '내 누적 포인트',
+      myValStr: fmt(myVal), unit: isAsset ? '원' : 'P',
+      pctBarW: (100 - topPct) + '%', topPctStr: String(topPct),
+      weekDeltaStr: weekDelta, nextHintStr: nextHint,
+      top,
+      myName: '김주식', myInitial: '김', myChgStr: isAsset ? '4' : '3',
+      goBack: () => this.nav('sttak 마이.dc.html'), goQuiz: () => this.nav('sttak 퀴즈.dc.html'),
+      pickAsset: () => this.pick('asset'), pickPoints: () => this.pick('points'),
+      toast: this.state.toast, hasToast: !!this.state.toast
+    };
+  }
+
+  tierFor(pts) {
+    const tiers = [['브론즈', 0, 500], ['실버', 500, 1000], ['골드', 1000, 2000], ['플래티넘', 2000, 3500], ['다이아', 3500, 99999]];
+    const t = tiers.find(t => pts >= t[1] && pts < t[2]);
+    return t ? t[0] : '다이아';
+  }
+}
+</script>
+</body>
+</html>
