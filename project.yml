@@ -107,12 +107,27 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.sttak.app.tests
         GENERATE_INFOPLIST_FILE: YES
 
+  # dev 백엔드 대상 E2E(개발자 로그인→온보딩→홈→퀴즈). 로컬/시연용 — CI 필수 아님.
+  sttakUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: sttak
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sttak.app.uitests
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   sttak:
     build:
       targets:
         sttak: all
         sttakTests: [test]
+        sttakUITests: [test]
     test:
       targets:
         - sttakTests
+        - sttakUITests

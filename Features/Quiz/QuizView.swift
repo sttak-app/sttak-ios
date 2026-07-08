@@ -174,6 +174,7 @@ private struct PlayingView: View {
         }
         .buttonStyle(.plain)
         .disabled(viewModel.isRevealed)
+        .accessibilityIdentifier("quizOption\(index)") // E2E(UITest)에서 보기 선택용
     }
 
     private func explanation(_ revealed: QuizViewModel.RevealedAnswer) -> some View {
