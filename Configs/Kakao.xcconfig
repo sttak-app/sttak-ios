@@ -1,0 +1,8 @@
+// 카카오 네이티브 앱 키 주입 — project.yml(SSOT)의 configFiles로 연결된다.
+// 기본은 placeholder. 실제 키는 같은 폴더에 Secrets.xcconfig(.gitignore 등록됨)를 만들어
+//   KAKAO_NATIVE_APP_KEY = 실제키
+// 로 오버라이드한다. ⚠️ 실제 키 커밋 금지. 키가 placeholder면 앱은 카카오 로그인 대신
+// "개발자 로그인"(X-User-Id dev 폴백)을 노출한다.
+KAKAO_NATIVE_APP_KEY = KAKAO_APP_KEY_PLACEHOLDER
+
+#include? "Secrets.xcconfig"
