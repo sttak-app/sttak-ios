@@ -141,4 +141,91 @@ final class LiveDTOMappingTests: XCTestCase {
         XCTAssertEqual(user.authProvider, .kakao)
         XCTAssertEqual(user.watchlistCodes, ["005930", "000660"])
     }
+
+    // MARK: 매매 — 접수 응답(PENDING) + tradingDate는 LocalDate(오프셋 없음)
+
+    func testCreateTradeMapping_pendingWithLocalDate() throws {
+        let json = Data("""
+        {"id": "42", "type": "BUY", "stockCode": "005930", "quantity": 10, "rationale": "근거",
+         "status": "PENDING", "orderedAt": "2026-08-12T02:30:00Z", "tradingDate": "2026-08-13",
+         "fillBasis": "OPEN", "referencePrice": 71200}
+        """.utf8)
+        let trade = try decoder.decode(CreateTradeResponseDTO.self, from: json).toDomain()
+        XCTAssertEqual(trade.status, .pending)
+        XCTAssertEqual(trade.fillBasis, .open)
+        XCTAssertEqual(trade.referencePrice, .krw(71_200))
+        XCTAssertNil(trade.filledPrice)
+        XCTAssertNotNil(trade.tradingDate)   // LocalDate("2026-08-13")가 깨지지 않고 파싱됨
+    }
+
+    // MARK: 매매 — 거래내역(체결·거부 + 임베드 회고)
+
+    func testTradeMapping_filledSellWithRetrospective() throws {
+        let json = Data("""
+        {"id": "7", "type": "SELL", "stockCode": "005930", "stockName": "삼성전자", "quantity": 5,
+         "rationale": "목표 도달", "status": "FILLED", "tradingDate": "2026-08-10", "fillBasis": "CLOSE",
+         "referencePrice": 70000, "filledPrice": 71200, "filledAt": "2026-08-10T06:00:00Z",
+         "rejectedReason": null, "realizedProfit": 17000, "orderedAt": "2026-08-09T02:00:00Z",
+         "retrospective": {"summaryLine": "5주 매도", "goodPoints": ["근거가 분명"], "watchPoints": ["분할도 고려"], "isPartialSell": true}}
+        """.utf8)
+        let trade = try decoder.decode(TradeDTO.self, from: json).toDomain()
+        XCTAssertEqual(trade.type, .sell)
+        XCTAssertEqual(trade.status, .filled)
+        XCTAssertEqual(trade.fillBasis, .close)
+        XCTAssertEqual(trade.filledPrice, .krw(71_200))
+        XCTAssertEqual(trade.realizedProfit, .krw(17_000))
+        XCTAssertEqual(trade.retrospective?.summaryLine, "5주 매도")
+        XCTAssertEqual(trade.retrospective?.isPartialSell, true)
+        XCTAssertNotNil(trade.filledAt)
+    }
+
+    func testTradeMapping_rejected() throws {
+        let json = Data("""
+        {"id": "8", "type": "BUY", "stockCode": "005930", "quantity": 3, "rationale": "근거",
+         "status": "REJECTED", "tradingDate": "2026-08-10", "fillBasis": "OPEN", "referencePrice": 70000,
+         "filledPrice": null, "filledAt": null, "rejectedReason": "현금 부족", "realizedProfit": null,
+         "orderedAt": "2026-08-09T02:00:00Z", "retrospective": null}
+        """.utf8)
+        let trade = try decoder.decode(TradeDTO.self, from: json).toDomain()
+        XCTAssertEqual(trade.status, .rejected)
+        XCTAssertEqual(trade.rejectedReason, "현금 부족")
+        XCTAssertNil(trade.retrospective)
+    }
+
+    // MARK: 포트폴리오
+
+    func testPortfolioMapping_cashAndHoldings() throws {
+        let json = Data("""
+        {"cash": 8738000, "holdings": [
+          {"stockCode": "005930", "stockName": "삼성전자", "quantity": 10, "averagePrice": 67800}]}
+        """.utf8)
+        let portfolio = try decoder.decode(PortfolioDTO.self, from: json).toDomain()
+        XCTAssertEqual(portfolio.cash, .krw(8_738_000))
+        XCTAssertEqual(portfolio.holdings.first?.stockCode, "005930")
+        XCTAssertEqual(portfolio.holdings.first?.averagePrice, .krw(67_800))
+    }
+
+    // MARK: 랭킹 — updatedAt은 LocalDateTime(오프셋 없음) + 내 순위
+
+    func testRankingMapping_localDateTimeUpdatedAt() throws {
+        let json = Data("""
+        {"updatedAt": "2026-08-12T16:20:09", "entries": [
+          {"rank": 1, "nickname": "우상향중", "assetValue": 16420000, "profitRate": 64.2}]}
+        """.utf8)
+        let snapshot = try decoder.decode(RankingSnapshotDTO.self, from: json).toDomain()
+        // 오프셋 없는 updatedAt이 디코딩을 깨뜨리지 않고 엔트리가 매핑된다.
+        XCTAssertEqual(snapshot.entries.first?.rank, 1)
+        XCTAssertEqual(snapshot.entries.first?.assetValue, .krw(16_420_000))
+        XCTAssertEqual(snapshot.entries.first?.rankChange, 0)   // 서버 미제공 → 0
+    }
+
+    func testMyRankingMapping() throws {
+        let json = Data("""
+        {"rank": 12, "assetValue": 12940000, "totalCount": 100, "topPercent": 12, "profitRate": 29.4}
+        """.utf8)
+        let mine = try decoder.decode(MyRankingDTO.self, from: json).toDomain()
+        XCTAssertEqual(mine.rank, 12)
+        XCTAssertEqual(mine.assetValue, .krw(12_940_000))
+        XCTAssertEqual(mine.topPercent, 12)
+    }
 }

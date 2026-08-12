@@ -21,4 +21,7 @@ struct MockRankingRepository: RankingRepository {
 
         return RankingSnapshot(id: "ranking", entries: entries, updatedAt: Date())
     }
+
+    /// Mock은 서버 권위값이 없음 → nil. 뷰모델이 로컬 합성(RankingPlacement + EvaluatePortfolio)으로 대체.
+    func fetchMyRanking() async throws -> MyRanking? { nil }
 }

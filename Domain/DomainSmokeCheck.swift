@@ -50,9 +50,11 @@ private func _domainSmokeCheck() {
         watchPoints: ["분할 매도도 고려해보세요"], isPartialSell: false, createdAt: Date(), followUp: nil
     )
     _ = Trade(
-        id: "t1", type: .sell, stockCode: "005930", quantity: 5, price: .krw(72_000),
-        rationale: TradeRationale(text: "목표가 도달"), executedAt: Date(),
-        realizedProfit: .krw(20_000), retrospective: retro
+        id: "t1", type: .sell, stockCode: "005930", quantity: 5,
+        rationale: TradeRationale(text: "목표가 도달"),
+        status: .filled, orderedAt: Date(), tradingDate: Date(), fillBasis: .close,
+        referencePrice: .krw(72_000), filledPrice: .krw(72_000), filledAt: Date(),
+        rejectedReason: nil, realizedProfit: .krw(20_000), retrospective: retro
     )
     _ = ChatSession(id: "c1", context: .news, messages: [])
     _ = RankingSnapshot(id: "s1", entries: [], updatedAt: Date())

@@ -47,4 +47,24 @@ enum JSONCoding {
         }
         return try? Date(raw, strategy: Date.ISO8601FormatStyle())
     }
+
+    /// 서버 LocalDate("yyyy-MM-dd")·오프셋 없는 LocalDateTime을 KST 기준 Date로 관대하게 파싱.
+    /// (백엔드 tradingDate·ranking updatedAt은 오프셋이 없어 ISO8601 전략만으론 깨진다.) 실패 시 nil.
+    static func parseKSTDate(_ raw: String?) -> Date? {
+        guard let raw, !raw.isEmpty else { return nil }
+        if let date = parseISO8601(raw) { return date }   // 오프셋 있으면 표준 파서로
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "Asia/Seoul")
+        for format in [
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd"
+        ] {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: raw) { return date }
+        }
+        return nil
+    }
 }

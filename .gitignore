@@ -1,6 +1,9 @@
 # ───────── macOS ─────────
 .DS_Store
 
+# ───────── 로컬 전용 MCP 설정 (Jira 등, 개인 인증) ─────────
+.mcp.json
+
 # ───────── Xcode user data ─────────
 xcuserdata/
 *.xcuserstate

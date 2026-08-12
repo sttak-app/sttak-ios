@@ -7,33 +7,27 @@ final class MockRepositoriesSmokeTests: XCTestCase {
 
     private func rationale() -> TradeRationale { TradeRationale(text: "테스트 근거") }
 
-    func testAttachRetrospective_persistsToTradeRecord() async throws {
-        let store = MockLocalStore(cash: 10_000_000, holdings: [
-            Holding(stockCode: "005930", quantity: 10, averagePrice: .krw(1_000)),
-        ])
+    func testPlaceOrder_mockSettlesImmediatelyFilled() async throws {
+        let store = MockLocalStore(cash: 10_000_000)
+        await store.debugSetPrice(71_200, for: "005930")
         let portfolio = MockPortfolioRepository(store: store)
-        let trade = try await portfolio.execute(
-            type: .sell, stockCode: "005930", quantity: 5, price: .krw(1_200), rationale: rationale()
+        let trade = try await portfolio.placeOrder(
+            type: .buy, stockCode: "005930", quantity: 5, rationale: rationale()
         )
-        XCTAssertNil(trade.retrospective) // 매도 직후엔 회고 없음
-
-        let retro = Retrospective(
-            id: "retro-1", summaryLine: "5주 매도", goodPoints: ["근거가 분명했어요"],
-            watchPoints: ["남은 수량 계획"], isPartialSell: true, createdAt: Date(), followUp: nil
-        )
-        try await portfolio.attachRetrospective(retro, toTradeID: trade.id)
-
-        // 기록에 영속화 → 마이 회고 아코디언에 노출.
-        let saved = try await portfolio.fetchTrades().first { $0.id == trade.id }
-        XCTAssertEqual(saved?.retrospective?.id, "retro-1")
+        // Mock은 즉시 체결(FILLED) — 체결가·기준·시각이 채워진다.
+        XCTAssertEqual(trade.status, .filled)
+        XCTAssertEqual(trade.filledPrice?.amount, 71_200)
+        XCTAssertEqual(trade.fillBasis, .open)
+        XCTAssertNotNil(trade.filledAt)
     }
 
     func testBuy_reducesCash_andAddsHolding() async throws {
         let store = MockLocalStore(cash: 10_000_000)
+        await store.debugSetPrice(71_200, for: "005930")
         let portfolio = MockPortfolioRepository(store: store)
 
-        let trade = try await portfolio.execute(
-            type: .buy, stockCode: "005930", quantity: 10, price: .krw(71_200), rationale: rationale()
+        let trade = try await portfolio.placeOrder(
+            type: .buy, stockCode: "005930", quantity: 10, rationale: rationale()
         )
         XCTAssertEqual(trade.type, .buy)
 
@@ -49,8 +43,10 @@ final class MockRepositoriesSmokeTests: XCTestCase {
         let store = MockLocalStore(cash: 10_000_000)
         let portfolio = MockPortfolioRepository(store: store)
 
-        _ = try await portfolio.execute(type: .buy, stockCode: "005930", quantity: 10, price: .krw(71_200), rationale: rationale())
-        _ = try await portfolio.execute(type: .sell, stockCode: "005930", quantity: 4, price: .krw(72_000), rationale: rationale())
+        await store.debugSetPrice(71_200, for: "005930")
+        _ = try await portfolio.placeOrder(type: .buy, stockCode: "005930", quantity: 10, rationale: rationale())
+        await store.debugSetPrice(72_000, for: "005930")
+        _ = try await portfolio.placeOrder(type: .sell, stockCode: "005930", quantity: 4, rationale: rationale())
 
         let p = try await portfolio.fetchPortfolio()
         // 10,000,000 − 712,000 + 288,000(4 × 72,000) = 9,576,000
@@ -60,9 +56,10 @@ final class MockRepositoriesSmokeTests: XCTestCase {
 
     func testSell_moreThanHeld_throwsValidation() async throws {
         let store = MockLocalStore(cash: 10_000_000)
+        await store.debugSetPrice(71_200, for: "005930")
         let portfolio = MockPortfolioRepository(store: store)
         do {
-            _ = try await portfolio.execute(type: .sell, stockCode: "005930", quantity: 1, price: .krw(71_200), rationale: rationale())
+            _ = try await portfolio.placeOrder(type: .sell, stockCode: "005930", quantity: 1, rationale: rationale())
             XCTFail("보유 수량 부족인데 예외가 발생하지 않았습니다.")
         } catch let error as RepositoryError {
             guard case .validation = error else {
@@ -73,9 +70,10 @@ final class MockRepositoriesSmokeTests: XCTestCase {
 
     func testBuy_insufficientCash_throwsValidation() async throws {
         let store = MockLocalStore(cash: 100_000)
+        await store.debugSetPrice(71_200, for: "005930")
         let portfolio = MockPortfolioRepository(store: store)
         do {
-            _ = try await portfolio.execute(type: .buy, stockCode: "005930", quantity: 10, price: .krw(71_200), rationale: rationale())
+            _ = try await portfolio.placeOrder(type: .buy, stockCode: "005930", quantity: 10, rationale: rationale())
             XCTFail("현금 부족인데 예외가 발생하지 않았습니다.")
         } catch let error as RepositoryError {
             guard case .validation = error else {
