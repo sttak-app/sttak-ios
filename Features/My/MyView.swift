@@ -69,10 +69,12 @@ struct MyView: View {
 private func pnlColor(_ amount: Int) -> Color { amount >= 0 ? AppColor.priceUp : AppColor.priceDown }
 private func signed(_ amount: Int) -> String { (amount >= 0 ? "+" : "") + Formatters.grouped(amount) }
 
-/// 매도 실현손익률(%) = 실현손익 / 원가(매도가×수량 − 실현손익) × 100.
+/// 매도 실현손익률(%) = 실현손익 / 원가(체결가×수량 − 실현손익) × 100. 체결된 매도에서만.
 private func returnPercent(of trade: Trade) -> Double? {
-    guard let profit = trade.realizedProfit?.amount else { return nil }
-    let costBasis = trade.price.amount * trade.quantity - profit
+    guard trade.status == .filled,
+          let profit = trade.realizedProfit?.amount,
+          let fill = trade.filledPrice?.amount else { return nil }
+    let costBasis = fill * trade.quantity - profit
     return costBasis != 0 ? Double(profit) / Double(costBasis) * 100 : nil
 }
 
@@ -226,6 +228,8 @@ private struct TradeHistorySection: View {
     private func tradeCard(_ trade: Trade) -> some View {
         let isBuy = trade.type == .buy
         let isOpen = viewModel.openTradeIDs.contains(trade.id)
+        // 체결 전(접수/거부/취소)은 참고가, 체결이면 체결가 표시.
+        let priceAmount = (trade.filledPrice ?? trade.referencePrice)?.amount
         return VStack(alignment: .leading, spacing: 0) {
             Button { viewModel.toggleTrade(trade.id) } label: {
                 HStack(spacing: AppSpacing.sm) {
@@ -233,8 +237,13 @@ private struct TradeHistorySection: View {
                         .padding(.horizontal, AppSpacing.sm).padding(.vertical, 3)
                         .background((isBuy ? AppColor.priceUp : AppColor.priceDown).opacity(0.12))
                         .clipShape(RoundedRectangle(cornerRadius: AppRadius.badge))
+                    statusChip(trade.status)
                     Text(viewModel.name(for: trade.stockCode)).font(AppFont.listItem).foregroundStyle(AppColor.ink)
-                    Text("\(trade.quantity)주 · \(Formatters.grouped(trade.price.amount))원").font(AppFont.number(13)).foregroundStyle(AppColor.inkSoft)
+                    if let priceAmount {
+                        Text("\(trade.quantity)주 · \(Formatters.grouped(priceAmount))원").font(AppFont.number(13)).foregroundStyle(AppColor.inkSoft)
+                    } else {
+                        Text("\(trade.quantity)주").font(AppFont.number(13)).foregroundStyle(AppColor.inkSoft)
+                    }
                     Spacer(minLength: AppSpacing.xs)
                     if let pct = returnPercent(of: trade) {
                         Text(Formatters.signedPercent(pct, fractionDigits: 1)).font(AppFont.number(13)).foregroundStyle(pnlColor(trade.realizedProfit?.amount ?? 0))
@@ -246,14 +255,7 @@ private struct TradeHistorySection: View {
             .buttonStyle(.plain)
 
             if isOpen {
-                HStack {
-                    Text("체결 \(Formatters.koreanDate(trade.executedAt))").font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
-                    Spacer()
-                    if let profit = trade.realizedProfit?.amount {
-                        Text("\(signed(profit))원").font(AppFont.number(13)).foregroundStyle(pnlColor(profit))
-                    }
-                }
-                .padding(.top, AppSpacing.md)
+                statusDetail(trade).padding(.top, AppSpacing.md)
                 HStack(alignment: .top, spacing: AppSpacing.sm) {
                     Text("근거").font(AppFont.microCaption).foregroundStyle(AppColor.textMuted)
                         .padding(.horizontal, AppSpacing.xs).padding(.vertical, 2)
@@ -263,11 +265,64 @@ private struct TradeHistorySection: View {
                 .padding(AppSpacing.md).frame(maxWidth: .infinity, alignment: .leading)
                 .background(AppColor.backgroundPrimary).clipShape(RoundedRectangle(cornerRadius: AppRadius.row))
                 .padding(.top, AppSpacing.sm)
+
+                if trade.status == .pending {
+                    Button { Task { await viewModel.cancelOrder(trade.id) } } label: {
+                        Text("주문 취소").font(AppFont.metaCaption).foregroundStyle(AppColor.priceDown)
+                            .frame(maxWidth: .infinity).padding(.vertical, AppSpacing.sm)
+                            .overlay(RoundedRectangle(cornerRadius: AppRadius.row).strokeBorder(AppColor.priceDown.opacity(0.4), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, AppSpacing.sm)
+                }
             }
         }
         .padding(AppSpacing.md)
         .background(AppColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.card)).appShadow(AppShadow.card)
+    }
+
+    /// 상태별 펼침 내용(체결/접수/거부/취소).
+    @ViewBuilder
+    private func statusDetail(_ trade: Trade) -> some View {
+        switch trade.status {
+        case .filled:
+            HStack {
+                Text("체결 \(trade.filledAt.map(Formatters.koreanDate) ?? "-")").font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
+                Spacer()
+                if let profit = trade.realizedProfit?.amount {
+                    Text("\(signed(profit))원").font(AppFont.number(13)).foregroundStyle(pnlColor(profit))
+                }
+            }
+        case .pending:
+            HStack {
+                Text("다음 영업일 체결 예정" + (trade.tradingDate.map { " · \(Formatters.koreanDate($0))" } ?? ""))
+                    .font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
+                Spacer()
+            }
+        case .rejected:
+            HStack(alignment: .top, spacing: AppSpacing.xs) {
+                Text("거부 사유").font(AppFont.metaCaption).foregroundStyle(AppColor.priceDown)
+                Text(trade.rejectedReason ?? "체결 조건을 충족하지 못했어요.").font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted)
+                Spacer()
+            }
+        case .cancelled:
+            Text("취소한 주문이에요.").font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
+        }
+    }
+
+    private func statusChip(_ status: TradeStatus) -> some View {
+        let (label, color): (String, Color) = {
+            switch status {
+            case .pending: return ("접수", AppColor.accentDeep)
+            case .filled: return ("체결", AppColor.textMuted2)
+            case .rejected: return ("거부", AppColor.priceDown)
+            case .cancelled: return ("취소", AppColor.textMuted2)
+            }
+        }()
+        return Text(label).font(AppFont.microCaption).foregroundStyle(color)
+            .padding(.horizontal, AppSpacing.xs).padding(.vertical, 2)
+            .background(color.opacity(0.10)).clipShape(RoundedRectangle(cornerRadius: AppRadius.badge))
     }
 }
 
@@ -296,7 +351,7 @@ private struct RetroSection: View {
                             .frame(width: 26, height: 26).background(AppColor.accent).clipShape(RoundedRectangle(cornerRadius: AppRadius.badge))
                         Text("\(viewModel.name(for: trade.stockCode)) 회고").font(AppFont.listItem).foregroundStyle(AppColor.ink)
                         Spacer()
-                        Text(Formatters.koreanDate(trade.executedAt)).font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
+                        Text(Formatters.koreanDate(trade.filledAt ?? trade.orderedAt)).font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
                         Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold)).foregroundStyle(AppColor.textMuted2)
                             .rotationEffect(.degrees(isOpen ? 180 : 0))
                     }

@@ -22,7 +22,8 @@ struct MockRetrospectiveRepository: RetrospectiveRepository {
     ) -> AsyncThrowingStream<Retrospective, Error> {
         let delay = stepDelay
         let id = "retro-\(trade.id)"
-        let summary = "\(trade.quantity)주 · \(Self.grouped(trade.price.amount))원에 매도"
+        let priceAmount = trade.filledPrice?.amount ?? trade.referencePrice?.amount ?? 0
+        let summary = "\(trade.quantity)주 · \(Self.grouped(priceAmount))원에 매도"
         let good = [Self.firstGood, realizedProfit.amount >= 0 ? Self.winGood : Self.lossGood]
         let watch = (isPartialSell ? [Self.partialWatch] : []) + Self.watchPoints
         return AsyncThrowingStream { continuation in
@@ -50,19 +51,21 @@ struct MockRetrospectiveRepository: RetrospectiveRepository {
 
     func generateFollowUp(for trade: Trade) async throws -> FollowUpRetrospective {
         // buildRetro의 결정적 해시 → 미래가/변화율.
-        let key = trade.stockCode + String(Int(trade.executedAt.timeIntervalSince1970)) + String(trade.quantity)
+        let filledAt = trade.filledAt ?? trade.orderedAt
+        let priceAmount = trade.filledPrice?.amount ?? trade.referencePrice?.amount ?? 0
+        let key = trade.stockCode + String(Int(filledAt.timeIntervalSince1970)) + String(trade.quantity)
         var hash = 0
         for scalar in key.unicodeScalars { hash = (hash &* 31 &+ Int(scalar.value)) & 0xffff }
         let f = (Double(hash % 1000) / 1000 - 0.42) * 0.22
-        let futPrice = Int((Double(trade.price.amount) * (1 + f) / 10).rounded()) * 10
-        let diffPercent = Double(futPrice - trade.price.amount) / Double(trade.price.amount) * 100
+        let futPrice = Int((Double(priceAmount) * (1 + f) / 10).rounded()) * 10
+        let diffPercent = priceAmount != 0 ? Double(futPrice - priceAmount) / Double(priceAmount) * 100 : 0
 
         let text = diffPercent >= 0
             ? "한 달 뒤엔 매도가보다 더 올랐어요. 더 가져갔다면 좋았겠지만, 그때 정보로는 충분히 합리적인 선택이었어요. ‘더 보유할지’는 늘 어려운 판단이에요."
             : "한 달 뒤엔 매도가보다 더 내렸어요. 그 시점에 정리한 판단이 결과적으로 손실을 줄였네요. 매번 이렇게 맞지는 않으니, 근거를 남기는 습관이 가장 큰 자산이에요."
 
         return FollowUpRetrospective(
-            evaluatedAt: trade.executedAt.addingTimeInterval(30 * 86_400),
+            evaluatedAt: filledAt.addingTimeInterval(30 * 86_400),
             priceAtFollowUp: .krw(futPrice),
             comparisonText: text
         )

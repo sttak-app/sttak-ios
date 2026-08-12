@@ -65,6 +65,12 @@ final class MyViewModel {
         }
     }
 
+    /// PENDING 주문 취소 후 목록 갱신.
+    func cancelOrder(_ id: String) async {
+        try? await portfolio.cancelOrder(id: id)
+        await load()
+    }
+
     func setFilter(_ filter: TradeFilter) { tradeFilter = filter }
     func toggleTrade(_ id: String) { toggle(id, in: &openTradeIDs) }
     func toggleRetro(_ id: String) { toggle(id, in: &openRetroIDs) }

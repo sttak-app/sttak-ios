@@ -182,19 +182,30 @@ enum MockData {
             watchPoints: ["절반만 정리했어요. 남은 수량의 계획도 함께 세워 두면 좋아요."],
             isPartialSell: true, createdAt: daysAgo(3), followUp: nil
         )
+        // 시드는 모두 과거 체결 완료 건. 접수 모델의 필드(status/tradingDate/fillBasis)를 채워 준다.
+        func filled(_ id: String, _ type: TradeType, _ code: String, _ qty: Int, _ price: Int,
+                    _ rationale: String, _ at: Date, realized: Int?, retro: Retrospective?) -> Trade {
+            Trade(
+                id: id, type: type, stockCode: code, quantity: qty,
+                rationale: TradeRationale(text: rationale),
+                status: .filled, orderedAt: at, tradingDate: at,
+                fillBasis: type == .buy ? .open : .close,
+                referencePrice: .krw(price), filledPrice: .krw(price), filledAt: at,
+                rejectedReason: nil, realizedProfit: realized.map(Money.krw), retrospective: retro
+            )
+        }
         return [
-            Trade(id: "seed-0", type: .buy, stockCode: "005930", quantity: 15, price: .krw(67_800),
-                  rationale: TradeRationale(text: "실적 기대와 이동평균선 정배열로 분할 매수."), executedAt: daysAgo(40), realizedProfit: nil, retrospective: nil),
-            Trade(id: "seed-1", type: .buy, stockCode: "035420", quantity: 4, price: .krw(225_000),
-                  rationale: TradeRationale(text: "AI 검색 베타 기대감에 소량 매수해 봤어요."), executedAt: daysAgo(38), realizedProfit: nil, retrospective: nil),
-            Trade(id: "seed-2", type: .sell, stockCode: "035420", quantity: 4, price: .krw(221_000),
-                  rationale: TradeRationale(text: "광고 매출 둔화 우려로 흐름이 꺾이는 것 같아 정리했어요."), executedAt: daysAgo(34), realizedProfit: .krw(-16_000), retrospective: naverRetro),
-            Trade(id: "seed-3", type: .buy, stockCode: "000660", quantity: 3, price: .krw(195_000),
-                  rationale: TradeRationale(text: "HBM4 양산 호재가 실적으로 이어질 것 같아서."), executedAt: daysAgo(6), realizedProfit: nil, retrospective: nil),
-            Trade(id: "seed-4", type: .sell, stockCode: "005930", quantity: 5, price: .krw(71_200),
-                  rationale: TradeRationale(text: "골든크로스 뒤 목표 수익에 도달해서 절반만 정리했어요."), executedAt: daysAgo(3), realizedProfit: .krw(17_000), retrospective: samsungRetro),
+            filled("seed-0", .buy, "005930", 15, 67_800, "실적 기대와 이동평균선 정배열로 분할 매수.", daysAgo(40), realized: nil, retro: nil),
+            filled("seed-1", .buy, "035420", 4, 225_000, "AI 검색 베타 기대감에 소량 매수해 봤어요.", daysAgo(38), realized: nil, retro: nil),
+            filled("seed-2", .sell, "035420", 4, 221_000, "광고 매출 둔화 우려로 흐름이 꺾이는 것 같아 정리했어요.", daysAgo(34), realized: -16_000, retro: naverRetro),
+            filled("seed-3", .buy, "000660", 3, 195_000, "HBM4 양산 호재가 실적으로 이어질 것 같아서.", daysAgo(6), realized: nil, retro: nil),
+            filled("seed-4", .sell, "005930", 5, 71_200, "골든크로스 뒤 목표 수익에 도달해서 절반만 정리했어요.", daysAgo(3), realized: 17_000, retro: samsungRetro),
         ]
     }
+
+    // MARK: 매매 근거 프리셋 (GET /reason-templates 의 Mock 대응)
+    static let buyReasonTemplates = ["뉴스 호재가 실적으로 이어질 것 같아서", "차트가 골든크로스라 상승 전환 기대", "거래량이 늘어 관심이 가서"]
+    static let sellReasonTemplates = ["목표한 수익에 도달해서", "흐름이 꺾이는 것 같아서", "다른 종목에 투자하려고"]
 
     // MARK: 내부 — 섹터(뉴스 보유 종목만 핸드오프에 명시, 나머지는 빈 문자열)
     private static func sector(for code: String) -> String {

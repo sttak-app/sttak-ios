@@ -16,18 +16,12 @@ struct TradeSheetView: View {
             switch viewModel.phase {
             case .input, .submitting:
                 inputForm
-            case .completedBuy:
-                Color.clear.frame(height: 1)
-            case .retrospective:
-                RetrospectiveCard(viewModel: viewModel, onClose: onClose)
+            case .submitted:
+                AcceptanceCard(viewModel: viewModel, onClose: onClose)
             }
         }
-        .containerRelativeFrame(.vertical) { height, _ in height * (viewModel.phase == .retrospective ? 0.82 : 0.7) }
+        .containerRelativeFrame(.vertical) { height, _ in height * (viewModel.phase == .submitted ? 0.62 : 0.7) }
         .task { await viewModel.load() }
-        .onChange(of: viewModel.phase) { _, phase in
-            if phase == .completedBuy { onClose() }
-        }
-        .onDisappear { viewModel.cancelRetrospective() }
     }
 
     // MARK: 입력 폼
@@ -162,75 +156,95 @@ struct TradeSheetView: View {
     }
 }
 
-// MARK: - 매도 직후 회고 카드(스트리밍)
-private struct RetrospectiveCard: View {
+// MARK: - 접수 완료 카드 (접수→익일 정산 모델)
+private struct AcceptanceCard: View {
     @Bindable var viewModel: TradeViewModel
     let onClose: () -> Void
 
-    private var profit: Int { viewModel.realizedProfit.amount }
-    private var profitColor: Color { profit >= 0 ? AppColor.priceUp : AppColor.priceDown }
+    private var trade: Trade? { viewModel.submittedTrade }
+    private var isFilled: Bool { trade?.status == .filled }   // Mock 즉시 체결 대응
+    private var accent: Color { viewModel.type == .buy ? AppColor.priceUp : AppColor.priceDown }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
                 HStack {
-                    Text("매도 회고").font(AppFont.focusCardTitle).foregroundStyle(AppColor.ink)
+                    Text(isFilled ? "체결 완료" : "주문 접수 완료").font(AppFont.focusCardTitle).foregroundStyle(AppColor.ink)
                     Spacer()
-                    Button(action: onClose) {
-                        Image(systemName: "xmark").font(.system(size: 12, weight: .bold)).foregroundStyle(AppColor.textMuted)
-                            .frame(width: 32, height: 32).background(AppColor.surfaceChip).clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
+                    closeButton
                 }
 
-                if let retro = viewModel.retro {
-                    Text(retro.summaryLine).font(AppFont.listItem).foregroundStyle(AppColor.ink)
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("실현 손익").font(AppFont.bodyStrong).foregroundStyle(AppColor.textMuted)
-                        Spacer()
-                        Text("\(profit >= 0 ? "+" : "")\(Formatters.grouped(profit))원")
-                            .font(AppFont.numberLarge).foregroundStyle(profitColor)
-                    }
-                    if retro.isPartialSell {
-                        Text("일부만 매도했어요. 남은 수량은 계속 보유 중이라, 같은 방식으로 회고가 쌓여요.")
-                            .font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted)
-                            .padding(AppSpacing.md).frame(maxWidth: .infinity, alignment: .leading)
-                            .background(AppColor.backgroundPrimary).clipShape(RoundedRectangle(cornerRadius: AppRadius.chip))
-                    }
+                VStack(spacing: AppSpacing.sm) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 44)).foregroundStyle(AppColor.accent)
+                    Text(isFilled
+                         ? "주문이 체결됐어요."
+                         : "주문이 접수됐어요. 다음 영업일에 체결될 예정이에요.")
+                        .font(AppFont.bodyStrong).foregroundStyle(AppColor.inkSoft)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.md)
 
-                    if !retro.goodPoints.isEmpty {
-                        pointSection("잘한 부분", retro.goodPoints, dot: AppColor.correct)
+                VStack(spacing: 0) {
+                    infoRow("종목", "\(viewModel.stockName) \(viewModel.quantity)주")
+                    divider
+                    infoRow("체결 기준", fillBasisText)
+                    if let date = trade?.tradingDate {
+                        divider
+                        infoRow(isFilled ? "체결일" : "체결 예정일", Formatters.koreanDate(date))
                     }
-                    if !retro.watchPoints.isEmpty {
-                        pointSection("함께 살펴볼 부분", retro.watchPoints, dot: AppColor.indicatorMA)
+                    if let reference = trade?.referencePrice {
+                        divider
+                        infoRow("참고가", "\(Formatters.grouped(reference.amount))원")
                     }
                 }
+                .padding(AppSpacing.md)
+                .background(AppColor.backgroundPrimary)
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
 
-                if viewModel.retroState == .streaming {
-                    HStack(spacing: AppSpacing.sm) {
-                        ProgressView().tint(AppColor.accent)
-                        Text("회고를 정리하고 있어요…").font(AppFont.bodyStrong).foregroundStyle(AppColor.textMuted)
-                    }
-                } else if case let .error(message) = viewModel.retroState {
-                    Text(message).font(AppFont.bodyStrong).foregroundStyle(AppColor.textMuted)
+                if !isFilled {
+                    Text("참고가는 최근 종가 기준이라 실제 체결가와 다를 수 있어요. 접수 내역은 ‘마이 > 매매기록’에서 확인·취소할 수 있어요.")
+                        .font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted).lineSpacing(2)
                 }
+
+                Button(action: onClose) {
+                    Text("확인").font(AppFont.ctaLabel).foregroundStyle(.white)
+                        .frame(maxWidth: .infinity).frame(height: 56)
+                        .background(accent).clipShape(RoundedRectangle(cornerRadius: AppRadius.card))
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, AppSpacing.screenHorizontal)
             .padding(.bottom, AppSpacing.xxl)
         }
     }
 
-    private func pointSection(_ title: String, _ points: [String], dot: Color) -> some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text(title).font(AppFont.bodyStrong).foregroundStyle(AppColor.ink)
-            ForEach(points, id: \.self) { point in
-                HStack(alignment: .top, spacing: AppSpacing.sm) {
-                    Circle().fill(dot).frame(width: 6, height: 6).padding(.top, 6)
-                    Text(point).font(AppFont.bodyStrong).foregroundStyle(AppColor.inkSoft).lineSpacing(3)
-                }
-            }
+    private var fillBasisText: String {
+        switch trade?.fillBasis {
+        case .open: return "주문일 시가"
+        case .close: return "주문일 종가"
+        case nil: return viewModel.type == .buy ? "주문일 시가" : "주문일 종가"
         }
-        .padding(AppSpacing.md).frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColor.backgroundPrimary).clipShape(RoundedRectangle(cornerRadius: AppRadius.row))
+    }
+
+    private var divider: some View {
+        Rectangle().fill(AppColor.hairline2).frame(height: 1).padding(.vertical, AppSpacing.sm)
+    }
+
+    private func infoRow(_ title: String, _ value: String) -> some View {
+        HStack {
+            Text(title).font(AppFont.metaCaption).foregroundStyle(AppColor.textMuted2)
+            Spacer()
+            Text(value).font(AppFont.number(14)).foregroundStyle(AppColor.ink)
+        }
+    }
+
+    private var closeButton: some View {
+        Button(action: onClose) {
+            Image(systemName: "xmark").font(.system(size: 12, weight: .bold)).foregroundStyle(AppColor.textMuted)
+                .frame(width: 32, height: 32).background(AppColor.surfaceChip).clipShape(Circle())
+        }
+        .buttonStyle(.plain)
     }
 }

@@ -49,14 +49,14 @@ final class AppContainer: Sendable {
             self.ranking = MockRankingRepository()
 
         case .live:
-            // Live 와이어링: 인증·뉴스·시세(부분)·퀴즈·챗봇은 서버.
-            // 포트폴리오·회고·랭킹 + 캔들·기초정보는 서버 미구현이라 Mock 유지.
+            // Live 와이어링: 인증·뉴스·시세·캔들·퀴즈·챗봇·랭킹·포트폴리오/매매는 서버.
+            // 회고(매도 직후 스트리밍은 제거, 정산 후 GET /trades 임베드) + 기초정보(PER/PBR)만 Mock.
             let config = AppConfig.default
             let tokenStore = KeychainTokenStore()
             let api = APIClient(config: config, tokenStore: tokenStore)
+            // 시세 공백 보충용 폴백에만 사용(캔들·quotes). 포트폴리오는 서버가 원본.
             let store = MockLocalStore(cash: MockData.seedCash, holdings: MockData.seedHoldings, trades: MockData.seedTrades)
             let mockMarket = MockMarketDataRepository(store: store)
-            let portfolio = MockPortfolioRepository(store: store)
 
             self.auth = LiveAuthRepository(
                 api: api,
@@ -67,10 +67,10 @@ final class AppContainer: Sendable {
             self.marketData = LiveMarketDataRepository(api: api, fallback: mockMarket)
             self.chat = LiveChatRepository(api: api)
             self.retrospective = MockRetrospectiveRepository()
-            // 퀴즈 보상은 서버가 적립 — 포트폴리오 Live 전까지 로컬 현금에 미러링.
-            self.quiz = LiveQuizRepository(api: api, localCapitalMirror: portfolio)
-            self.portfolio = portfolio
-            self.ranking = MockRankingRepository()
+            // 퀴즈 보상은 서버가 적립(SSOT). 포트폴리오가 Live라 로컬 미러는 이중 적립 → 제거.
+            self.quiz = LiveQuizRepository(api: api)
+            self.portfolio = LivePortfolioRepository(api: api)
+            self.ranking = LiveRankingRepository(api: api)
         }
     }
 
@@ -149,7 +149,6 @@ final class AppContainer: Sendable {
             price: intent.price,
             executeTrade: ExecuteTrade(portfolio: portfolio),
             portfolio: portfolio,
-            retrospective: retrospective,
             onCompleted: onCompleted
         )
     }

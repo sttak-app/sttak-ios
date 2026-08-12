@@ -42,15 +42,16 @@ actor MockLocalStore {
     func portfolioSnapshot() -> Portfolio { Portfolio(cash: .krw(cash), holdings: holdings) }
     func allTrades() -> [Trade] { trades.reversed() } // 최신순
 
-    /// 매수/매도 기록 + cash·holdings 갱신. (근거 필수 등 풀 검증은 ExecuteTrade UseCase)
+    /// 매수/매도 접수 + 즉시 정산(Mock) → cash·holdings 갱신. (근거 필수 등 풀 검증은 ExecuteTrade UseCase)
+    /// 체결가는 클라이언트가 넘기지 않으므로 시세 레이어에서 내부 조회한다(Live와 동일 계약).
     func recordTrade(
         type: TradeType,
         stockCode: String,
         quantity: Int,
-        price: Money,
         rationale: TradeRationale
     ) throws -> Trade {
         guard quantity > 0 else { throw RepositoryError.validation(message: "수량은 1 이상이어야 해요.") }
+        let price = Money.krw(currentPrice(for: stockCode))
         let amount = price.amount * quantity
 
         var realizedProfit: Money?
@@ -70,14 +71,21 @@ actor MockLocalStore {
             applySell(stockCode: stockCode, quantity: quantity)
         }
 
+        let now = Date()
         let trade = Trade(
             id: "trade-\(trades.count)",
             type: type,
             stockCode: stockCode,
             quantity: quantity,
-            price: price,
             rationale: rationale,
-            executedAt: Date(),
+            status: .filled,                                   // Mock은 즉시 체결
+            orderedAt: now,
+            tradingDate: Self.todayKST(),
+            fillBasis: type == .buy ? .open : .close,
+            referencePrice: price,
+            filledPrice: price,
+            filledAt: now,
+            rejectedReason: nil,
             realizedProfit: realizedProfit,
             retrospective: nil
         )
@@ -85,15 +93,27 @@ actor MockLocalStore {
         return trade
     }
 
-    /// 매도 직후 회고를 해당 Trade에 연결(기록 영속화). Trade는 불변이라 복제 후 교체.
-    func attachRetrospective(_ retrospective: Retrospective, toTradeID id: String) {
-        guard let index = trades.firstIndex(where: { $0.id == id }) else { return }
-        let t = trades[index]
-        trades[index] = Trade(
-            id: t.id, type: t.type, stockCode: t.stockCode, quantity: t.quantity, price: t.price,
-            rationale: t.rationale, executedAt: t.executedAt, realizedProfit: t.realizedProfit,
-            retrospective: retrospective
-        )
+    /// 체결가 내부 조회 — 시세 오버라이드/유니버스 base + DEBUG 오프셋(MockMarketDataRepository와 동일).
+    /// (테스트는 debugSetPrice로 절대가를 주입해 정산 수식을 검증한다.)
+    private func currentPrice(for code: String) -> Int {
+        #if DEBUG
+        if let forced = debugForcedPrices[code] { return max(1, forced) }
+        #endif
+        let base = MockData.quoteOverrides[code]?.price
+            ?? MockData.universe.first { $0.code == code }?.price
+            ?? 0
+        #if DEBUG
+        return max(1, base + debugPriceOffset(for: code))
+        #else
+        return max(1, base)
+        #endif
+    }
+
+    /// 정산 기준일(익영업일 근사) — Mock은 KST 오늘 자정으로 둔다.
+    private static func todayKST() -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Seoul") ?? .current
+        return calendar.startOfDay(for: Date())
     }
 
     // MARK: 퀴즈/자본금
@@ -141,6 +161,10 @@ actor MockLocalStore {
     func debugAddPriceOffset(_ delta: Int, for code: String) { debugPriceOffsets[code, default: 0] += delta }
     func debugPriceOffset(for code: String) -> Int { debugPriceOffsets[code] ?? 0 }
     func clearDebugPriceOffsets() { debugPriceOffsets = [:] }
+
+    // 테스트 전용 절대 체결가 주입 — 정산 수식(가중평단·실현손익) 검증용. base·offset보다 우선.
+    private var debugForcedPrices: [String: Int] = [:]
+    func debugSetPrice(_ amount: Int, for code: String) { debugForcedPrices[code] = amount }
     #endif
 
     // MARK: 내부

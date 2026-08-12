@@ -17,6 +17,7 @@ final class RankingViewModel {
     private(set) var myAsset = Money.krw(0)
     private(set) var myReturnRate = 0.0
     private(set) var myNickname = "나"
+    private(set) var serverTopPercent: Int?   // /ranking/me 제공 시 우선 사용
 
     private let ranking: RankingRepository
     private let evaluate: EvaluatePortfolio
@@ -28,9 +29,10 @@ final class RankingViewModel {
         self.auth = auth
     }
 
-    /// 상위 백분위(작을수록 상위). rank/total × 100.
+    /// 상위 백분위(작을수록 상위). 서버 값이 있으면 우선, 없으면 rank/total × 100.
     var topPercent: Int {
-        totalUsers > 0 ? max(1, Int((Double(myRank) / Double(totalUsers) * 100).rounded())) : 0
+        if let serverTopPercent { return serverTopPercent }
+        return totalUsers > 0 ? max(1, Int((Double(myRank) / Double(totalUsers) * 100).rounded())) : 0
     }
 
     /// 한 랭커의 수익률(시작 자본 대비) — 표시용.
@@ -42,15 +44,26 @@ final class RankingViewModel {
         phase = .loading
         do {
             let snapshot = try await ranking.fetchRanking()
-            let valuation = try await evaluate()
+            entries = snapshot.entries
             if let user = (try? await auth.currentUser()) ?? nil { myNickname = user.nickname }
 
-            myAsset = valuation.totalAssets       // 마이 화면 평가자산과 같은 값
-            myReturnRate = valuation.returnRate
-            let placement = RankingPlacement.locate(myAsset: myAsset, in: snapshot.entries)
-            myRank = placement.rank
-            totalUsers = placement.totalUsers
-            entries = snapshot.entries
+            if let mine = (try? await ranking.fetchMyRanking()) ?? nil {
+                // 서버 권위값(/ranking/me) — 마이 자산요약과 일관.
+                myRank = mine.rank
+                totalUsers = mine.totalCount
+                myAsset = mine.assetValue
+                myReturnRate = mine.returnRate
+                serverTopPercent = mine.topPercent
+            } else {
+                // 로컬 합성(Mock/계좌 없음) — 리더보드에 내 평가자산을 끼워 위치 산출.
+                let valuation = try await evaluate()
+                myAsset = valuation.totalAssets
+                myReturnRate = valuation.returnRate
+                let placement = RankingPlacement.locate(myAsset: myAsset, in: snapshot.entries)
+                myRank = placement.rank
+                totalUsers = placement.totalUsers
+                serverTopPercent = nil
+            }
             phase = .loaded
         } catch {
             phase = .failed("랭킹을 불러오지 못했어요.")
