@@ -20,8 +20,9 @@ struct StockBriefing: Sendable, Equatable, Identifiable {
     let stock: Stock
     let quote: Quote?
     let dominantSentiment: Sentiment   // 스트립 점 색
-    let primaryNews: [NewsItem]        // 주목 소식(≤2)
-    let otherNews: [NewsItem]          // 그 외 소식
+    let news: [NewsItem]               // 첫 페이지 뉴스(중요도순). 모두 동일한 리치 카드로 표시
+    let newsCursor: String?            // 다음 페이지 커서(첫 페이지 이후 더보기용). 없으면 nil
+    let hasMoreNews: Bool              // 더 불러올 뉴스가 있는지(무한 스크롤)
     var id: String { stock.code }
 }
 

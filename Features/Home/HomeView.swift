@@ -100,28 +100,28 @@ struct HomeView: View {
 
     @ViewBuilder
     private func loaded(_ briefing: DailyBriefing, viewModel: HomeViewModel) -> some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                GreetingView(briefing: briefing, isRefreshing: viewModel.isRefreshing) {
-                    Task { await viewModel.refresh() }
-                }
-                .padding(.horizontal, AppSpacing.screenHorizontal)
-                .padding(.top, AppSpacing.md)
-
-                StockStripView(
-                    stocks: briefing.stocks,
-                    focusIndex: viewModel.focusIndex,
-                    onSelect: { index in withAnimation(.snappy) { viewModel.setFocus(index) } }
-                )
-                .padding(.top, AppSpacing.lg)
-
-                FocusPager(briefing: briefing, viewModel: viewModel)
-                    .padding(.top, AppSpacing.sm)
-
-                PageDots(count: briefing.stocks.count, index: viewModel.focusIndex)
-                    .padding(.vertical, AppSpacing.lg)
+        // 그리팅·스트립은 상단 고정, 포커스 카드 페이저가 남은 공간을 채우며 각 카드가 세로 스크롤(무한 스크롤).
+        // 바깥 세로 ScrollView를 두면 카드 내부 세로 스크롤과 제스처가 충돌하므로 두지 않는다.
+        VStack(spacing: 0) {
+            GreetingView(briefing: briefing, isRefreshing: viewModel.isRefreshing) {
+                Task { await viewModel.refresh() }
             }
-            .padding(.bottom, AppSpacing.xxl)
+            .padding(.horizontal, AppSpacing.screenHorizontal)
+            .padding(.top, AppSpacing.md)
+
+            StockStripView(
+                stocks: briefing.stocks,
+                focusIndex: viewModel.focusIndex,
+                onSelect: { index in withAnimation(.snappy) { viewModel.setFocus(index) } }
+            )
+            .padding(.top, AppSpacing.lg)
+
+            FocusPager(briefing: briefing, viewModel: viewModel)
+                .padding(.top, AppSpacing.sm)
+                .frame(maxHeight: .infinity)
+
+            PageDots(count: briefing.stocks.count, index: viewModel.focusIndex)
+                .padding(.vertical, AppSpacing.lg)
         }
     }
 
@@ -275,16 +275,23 @@ private struct FocusPager: View {
     var body: some View {
         TabView(selection: focusBinding) {
             ForEach(Array(briefing.stocks.enumerated()), id: \.offset) { index, sb in
-                FocusCardView(briefing: sb) { news in
-                    viewModel.openNewsDetail(stockName: sb.stock.name, news: news)
+                // 각 페이지를 세로 ScrollView로 감싸 카드 내부에서 스크롤 + 하단 도달 시 더 불러오기.
+                ScrollView(showsIndicators: false) {
+                    FocusCardView(
+                        briefing: sb,
+                        extraNews: viewModel.extraNews(for: sb.id),
+                        hasMore: viewModel.hasMoreNews(for: sb.id),
+                        isLoadingMore: viewModel.isLoadingMore(for: sb.id),
+                        onLoadMore: { Task { await viewModel.loadMore(for: sb.id) } },
+                        onNewsTap: { news in viewModel.openNewsDetail(stockName: sb.stock.name, news: news) }
+                    )
+                    .padding(.horizontal, AppSpacing.lg)
+                    .padding(.bottom, AppSpacing.lg)
                 }
-                .padding(.horizontal, AppSpacing.lg)
-                .frame(maxHeight: .infinity, alignment: .top)
                 .tag(index)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .frame(height: 440)
     }
 
     private var focusBinding: Binding<Int> {

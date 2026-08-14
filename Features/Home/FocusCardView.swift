@@ -1,46 +1,63 @@
 import SwiftUI
 
-/// 포커스 종목 카드(스와이프 1장). 핸드오프: 컴팩트 헤더(가격은 보조) + 주목 소식 2건(쉬운 풀이) + 그 외 소식.
+/// 포커스 종목 카드(스와이프 1장). 컴팩트 헤더(가격은 보조) + 모든 소식을 동일한 리치 카드(배지+쉬운 풀이)로.
+/// 세로 스크롤로 더 내리면 커서 페이지네이션으로 계속 이어 붙는다(무한 스크롤).
 struct FocusCardView: View {
     let briefing: StockBriefing
+    let extraNews: [NewsItem]        // 첫 페이지 이후 누적된 뉴스
+    let hasMore: Bool                // 더 불러올 뉴스가 있는지
+    let isLoadingMore: Bool          // 더보기 진행 중
+    let onLoadMore: () -> Void
     let onNewsTap: (NewsItem) -> Void
 
     private let now = Date()
 
+    /// 전체 소식 = 첫 페이지(중요도순) + 이후 커서로 받아온 페이지들.
+    private var allNews: [NewsItem] { briefing.news + extraNews }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        // LazyVStack: 아래 행들은 스크롤로 가까워질 때 생성 → 하단 로더 onAppear가 "스크롤 도달" 시에만 발화.
+        LazyVStack(alignment: .leading, spacing: 0) {
             header
 
-            Text("오늘 주목할 소식")
+            Text("오늘의 소식")
                 .font(AppFont.bodyStrong)
                 .foregroundStyle(AppColor.ink)
                 .padding(.bottom, AppSpacing.md)
 
-            if briefing.primaryNews.isEmpty {
+            if allNews.isEmpty {
                 Text("오늘은 새 소식이 없어요")
                     .font(AppFont.body)
                     .foregroundStyle(AppColor.textMuted)
                     .padding(.vertical, AppSpacing.md)
             } else {
-                ForEach(Array(briefing.primaryNews.enumerated()), id: \.offset) { _, news in
-                    PrimaryNewsRow(news: news, reference: now) { onNewsTap(news) }
+                ForEach(Array(allNews.enumerated()), id: \.offset) { _, news in
+                    NewsRow(news: news, reference: now) { onNewsTap(news) }
                 }
             }
 
-            if !briefing.otherNews.isEmpty {
-                Text("그 외 소식 \(briefing.otherNews.count)건")
-                    .font(AppFont.metaCaption)
-                    .foregroundStyle(AppColor.textMuted2)
-                    .padding(.top, AppSpacing.xs)
-                ForEach(Array(briefing.otherNews.enumerated()), id: \.offset) { _, news in
-                    OtherNewsRow(news: news, reference: now) { onNewsTap(news) }
-                }
+            if hasMore {
+                loadMoreFooter
             }
         }
         .padding(AppSpacing.xl)
         .background(AppColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.banner))
         .appShadow(AppShadow.card)
+    }
+
+    /// 하단 로더 — 스크롤로 나타나면 다음 페이지를 요청한다.
+    private var loadMoreFooter: some View {
+        HStack {
+            Spacer()
+            ProgressView()
+                .tint(AppColor.accent)
+                .opacity(isLoadingMore ? 1 : 0.4)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppSpacing.md)
+        .onAppear { onLoadMore() }
     }
 
     private var header: some View {
@@ -67,8 +84,8 @@ struct FocusCardView: View {
     }
 }
 
-/// 주목 소식 1건(배지 + 제목 + 쉬운 풀이 박스).
-private struct PrimaryNewsRow: View {
+/// 소식 1건(배지 + 제목 + 쉬운 풀이 박스). 모든 기사를 이 리치 카드로 통일.
+private struct NewsRow: View {
     let news: NewsItem
     let reference: Date
     let onTap: () -> Void
@@ -109,37 +126,6 @@ private struct PrimaryNewsRow: View {
             .padding(.vertical, AppSpacing.md)
             .overlay(alignment: .bottom) {
                 Rectangle().fill(AppColor.divider).frame(height: 1)
-            }
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-/// 그 외 소식 1줄(점 + 제목 + 시간 + 화살표).
-private struct OtherNewsRow: View {
-    let news: NewsItem
-    let reference: Date
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: AppSpacing.md) {
-                Circle().fill(news.sentiment.color).frame(width: 7, height: 7)
-                Text(news.title)
-                    .font(AppFont.newsTitle)
-                    .foregroundStyle(AppColor.ink)
-                    .lineLimit(1)
-                Spacer(minLength: AppSpacing.sm)
-                Text(Formatters.relativeTime(news.publishedAt, reference: reference))
-                    .font(AppFont.microCaption)
-                    .foregroundStyle(AppColor.textMuted2)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(AppColor.textMuted2)
-            }
-            .padding(.vertical, AppSpacing.md)
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(AppColor.hairline2).frame(height: 1)
             }
         }
         .buttonStyle(.plain)

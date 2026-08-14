@@ -89,6 +89,7 @@ final class AppContainer: Sendable {
     func makeHomeViewModel() -> HomeViewModel {
         HomeViewModel(
             loadBriefing: LoadDailyBriefing(marketData: marketData, news: news),
+            news: news,
             auth: auth,
             portfolio: portfolio
         )

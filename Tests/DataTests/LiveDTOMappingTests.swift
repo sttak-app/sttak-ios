@@ -9,29 +9,30 @@ final class LiveDTOMappingTests: XCTestCase {
     // MARK: 뉴스
 
     func testNewsMapping_feedEnvelopeAndFields() throws {
-        // 서버 실제 응답 형태: {feed: {code: [item]}, fetchedAt} 엔벨로프 (NewsFeedResponse)
+        // 서버 실제 content(NewsFeedResponse): {items: [card], nextCursor, hasNext}. 봉투 {message, content}는 APIClient가 언래핑.
         let json = Data("""
         {
-          "feed": {
-            "005930": [{
-              "sentiment": "POSITIVE",
-              "title": "실적 개선",
-              "easy": "쉽게 말하면 좋아요",
-              "summary": "요약",
-              "whyPoints": ["포인트1", "포인트2"],
-              "reason": "이유",
-              "terms": [{"term": "PER", "definition": "주가수익비율"}],
-              "source": "연합뉴스",
-              "publishedAt": "2026-07-07T09:00:00Z",
-              "originalURL": "https://news.example.com/1",
-              "lead": "리드 문장"
-            }]
-          },
-          "fetchedAt": "2026-07-08T14:00:00Z"
+          "items": [{
+            "sentiment": "POSITIVE",
+            "title": "실적 개선",
+            "easy": "쉽게 말하면 좋아요",
+            "summary": "요약",
+            "whyPoints": ["포인트1", "포인트2"],
+            "reason": "이유",
+            "terms": [{"term": "PER", "definition": "주가수익비율"}],
+            "source": "연합뉴스",
+            "publishedAt": "2026-07-07T09:00:00Z",
+            "originalURL": "https://news.example.com/1",
+            "lead": "리드 문장"
+          }],
+          "nextCursor": "CURSOR123",
+          "hasNext": true
         }
         """.utf8)
         let dto = try decoder.decode(NewsFeedDTO.self, from: json)
-        let item = try XCTUnwrap(dto.feed["005930"]?.first).toDomain()
+        XCTAssertEqual(dto.nextCursor, "CURSOR123")
+        XCTAssertTrue(dto.hasNext)
+        let item = try XCTUnwrap(dto.items.first).toDomain()
         XCTAssertEqual(item.sentiment, .positive)
         XCTAssertEqual(item.title, "실적 개선")
         XCTAssertEqual(item.whyPoints.count, 2)
@@ -43,10 +44,10 @@ final class LiveDTOMappingTests: XCTestCase {
     func testNewsMapping_missingOptionalFieldsAreDefaulted() throws {
         // lead/terms/whyPoints 등이 없어도(수집 소스에 따라 null) 디코딩이 깨지지 않는다.
         let json = Data("""
-        {"feed": {"005930": [{"title": "제목만", "publishedAt": "2026-07-07T09:00:00Z"}]}}
+        {"items": [{"title": "제목만", "publishedAt": "2026-07-07T09:00:00Z"}], "nextCursor": null, "hasNext": false}
         """.utf8)
         let item = try XCTUnwrap(
-            try decoder.decode(NewsFeedDTO.self, from: json).feed["005930"]?.first
+            try decoder.decode(NewsFeedDTO.self, from: json).items.first
         ).toDomain()
         XCTAssertEqual(item.sentiment, .neutral)
         XCTAssertEqual(item.lead, "")

@@ -18,13 +18,18 @@ final class LoadDailyBriefingTests: XCTestCase {
         )
     }
 
+    /// 코드별 뉴스 배열을 aggregate 입력(단일 페이지, 더보기 없음)으로 감싼다.
+    private func pages(_ byCode: [String: [NewsItem]]) -> [String: NewsPage] {
+        byCode.mapValues { NewsPage(items: $0, nextCursor: nil, hasNext: false) }
+    }
+
     // MARK: 전체 무드 (호재>악재=긍정 / 악재>호재=주의 / 동률=혼재)
 
     func testMood_positive_whenMorePositiveThanNegative() {
         let briefing = LoadDailyBriefing.aggregate(
             orderedStocks: [stock("A")],
             quotes: [:],
-            newsByCode: ["A": [news(.positive, minutesAgo: 1), news(.positive, minutesAgo: 2), news(.negative, minutesAgo: 3)]]
+            pagesByCode: pages(["A": [news(.positive, minutesAgo: 1), news(.positive, minutesAgo: 2), news(.negative, minutesAgo: 3)]])
         )
         XCTAssertEqual(briefing.mood, .positive)
         XCTAssertEqual(briefing.breakdown.positive, 2)
@@ -36,7 +41,7 @@ final class LoadDailyBriefingTests: XCTestCase {
         let briefing = LoadDailyBriefing.aggregate(
             orderedStocks: [stock("A")],
             quotes: [:],
-            newsByCode: ["A": [news(.negative, minutesAgo: 1), news(.negative, minutesAgo: 2), news(.positive, minutesAgo: 3)]]
+            pagesByCode: pages(["A": [news(.negative, minutesAgo: 1), news(.negative, minutesAgo: 2), news(.positive, minutesAgo: 3)]])
         )
         XCTAssertEqual(briefing.mood, .cautious)
     }
@@ -45,7 +50,7 @@ final class LoadDailyBriefingTests: XCTestCase {
         let briefing = LoadDailyBriefing.aggregate(
             orderedStocks: [stock("A")],
             quotes: [:],
-            newsByCode: ["A": [news(.positive, minutesAgo: 1), news(.negative, minutesAgo: 2), news(.neutral, minutesAgo: 3)]]
+            pagesByCode: pages(["A": [news(.positive, minutesAgo: 1), news(.negative, minutesAgo: 2), news(.neutral, minutesAgo: 3)]])
         )
         XCTAssertEqual(briefing.mood, .mixed)
     }
@@ -56,10 +61,10 @@ final class LoadDailyBriefingTests: XCTestCase {
         let briefing = LoadDailyBriefing.aggregate(
             orderedStocks: [stock("A"), stock("B")],
             quotes: [:],
-            newsByCode: [
+            pagesByCode: pages([
                 "A": [news(.positive, minutesAgo: 1), news(.positive, minutesAgo: 2), news(.negative, minutesAgo: 3)], // 호재 우세
                 "B": [news(.negative, minutesAgo: 1), news(.neutral, minutesAgo: 2)],                                  // 악재 우세
-            ]
+            ])
         )
         XCTAssertEqual(briefing.stocks[0].dominantSentiment, .positive)
         XCTAssertEqual(briefing.stocks[1].dominantSentiment, .negative)
@@ -69,32 +74,46 @@ final class LoadDailyBriefingTests: XCTestCase {
         let briefing = LoadDailyBriefing.aggregate(
             orderedStocks: [stock("A")],
             quotes: [:],
-            newsByCode: ["A": [news(.positive, minutesAgo: 1), news(.negative, minutesAgo: 2)]]
+            pagesByCode: pages(["A": [news(.positive, minutesAgo: 1), news(.negative, minutesAgo: 2)]])
         )
         XCTAssertEqual(briefing.stocks[0].dominantSentiment, .neutral)
     }
 
-    // MARK: 주목 소식 정렬 (비중립 우선 → 최신순), 상위 2건
+    // MARK: 뉴스 정렬 (비중립 우선 → 최신순)
 
-    func testPrimaryNews_ranksNonNeutralFirstThenRecent() {
-        // 중립(가장 최신) + 호재(오래됨) + 악재(중간) → 비중립이 먼저, 그중 최신(악재 3분 vs 호재 10분)
+    func testNews_ranksNonNeutralFirstThenRecent() {
+        // 중립(가장 최신) + 호재(오래됨) + 악재(중간) → 비중립이 먼저, 그중 최신(악재 3분 vs 호재 10분), 중립은 뒤로
         let items = [
             news(.neutral, minutesAgo: 1, title: "중립-최신"),
             news(.positive, minutesAgo: 10, title: "호재-오래"),
             news(.negative, minutesAgo: 3, title: "악재-중간"),
         ]
-        let briefing = LoadDailyBriefing.aggregate(orderedStocks: [stock("A")], quotes: [:], newsByCode: ["A": items])
-        let primary = briefing.stocks[0].primaryNews
-        XCTAssertEqual(primary.count, 2)
-        XCTAssertEqual(primary[0].title, "악재-중간")   // 비중립 + 더 최신
-        XCTAssertEqual(primary[1].title, "호재-오래")   // 비중립
-        XCTAssertEqual(briefing.stocks[0].otherNews.first?.title, "중립-최신") // 중립은 뒤로
+        let briefing = LoadDailyBriefing.aggregate(orderedStocks: [stock("A")], quotes: [:], pagesByCode: pages(["A": items]))
+        let ordered = briefing.stocks[0].news
+        XCTAssertEqual(ordered.map(\.title), ["악재-중간", "호재-오래", "중립-최신"])
+    }
+
+    // MARK: 무한 스크롤 커서 (첫 페이지 nextCursor/hasNext → StockBriefing 전달)
+
+    func testNewsCursor_isCarriedIntoBriefing() {
+        let briefing = LoadDailyBriefing.aggregate(
+            orderedStocks: [stock("A"), stock("B")],
+            quotes: [:],
+            pagesByCode: [
+                "A": NewsPage(items: [news(.positive, minutesAgo: 1)], nextCursor: "2", hasNext: true),
+                "B": NewsPage(items: [news(.neutral, minutesAgo: 1)], nextCursor: nil, hasNext: false),
+            ]
+        )
+        XCTAssertEqual(briefing.stocks[0].newsCursor, "2")
+        XCTAssertTrue(briefing.stocks[0].hasMoreNews)
+        XCTAssertNil(briefing.stocks[1].newsCursor)
+        XCTAssertFalse(briefing.stocks[1].hasMoreNews)
     }
 
     // MARK: 빈/순서
 
     func testEmptyWatchlist_returnsEmptyBriefing() {
-        let briefing = LoadDailyBriefing.aggregate(orderedStocks: [], quotes: [:], newsByCode: [:])
+        let briefing = LoadDailyBriefing.aggregate(orderedStocks: [], quotes: [:], pagesByCode: [:])
         XCTAssertEqual(briefing.mood, .mixed)
         XCTAssertEqual(briefing.totalNewsCount, 0)
         XCTAssertTrue(briefing.stocks.isEmpty)
@@ -104,7 +123,7 @@ final class LoadDailyBriefingTests: XCTestCase {
         let briefing = LoadDailyBriefing.aggregate(
             orderedStocks: [stock("C"), stock("A"), stock("B")],
             quotes: [:],
-            newsByCode: [:]
+            pagesByCode: [:]
         )
         XCTAssertEqual(briefing.stocks.map(\.stock.code), ["C", "A", "B"])
     }
