@@ -1,12 +1,14 @@
 import Foundation
 
-/// GET /api/v1/news 응답 본문 — 서버는 코드별 map 을 feed/fetchedAt 엔벨로프로 감싼다(NewsFeedResponse).
+/// GET /api/v1/news?code=… 의 content(NewsFeedResponse) — 한 종목의 뉴스 카드 목록 + 커서 페이지네이션.
+/// 공통 봉투 `{message, content}` 는 APIClient 가 언래핑하므로 여기서는 content 본문만 표현한다.
 struct NewsFeedDTO: Decodable, Sendable {
-    let feed: [String: [NewsItemDTO]]
-    let fetchedAt: Date?
+    let items: [NewsItemDTO]
+    let nextCursor: String?     // 다음 페이지 없으면 null
+    let hasNext: Bool
 }
 
-/// GET /api/v1/news 응답의 뉴스 한 건(feed 맵의 원소).
+/// GET /api/v1/news 응답의 뉴스 한 건(NewsCardResponse, items[] 의 원소).
 struct NewsItemDTO: Decodable, Sendable {
     let sentiment: String?         // "POSITIVE" | "NEUTRAL" | "NEGATIVE" (미분류 시 null 가능 — 중립 처리)
     let title: String

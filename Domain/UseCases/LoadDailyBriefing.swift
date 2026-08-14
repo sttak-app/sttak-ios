@@ -19,28 +19,45 @@ struct LoadDailyBriefing: Sendable {
         }
         async let stocksTask = marketData.fetchStocks(forCodes: watchlistCodes)
         async let quotesTask = marketData.fetchQuotes(forStockCodes: watchlistCodes)
-        async let newsTask = news.fetchNews(forStockCodes: watchlistCodes)
+        async let pagesTask = fetchFirstPages(codes: watchlistCodes)
 
         let stocks = try await stocksTask
         let quotes = try await quotesTask
-        let newsByCode = try await newsTask
+        let pagesByCode = try await pagesTask
 
         // 관심종목 순서 유지.
         let ordered = watchlistCodes.compactMap { code in stocks.first { $0.code == code } }
-        return Self.aggregate(orderedStocks: ordered, quotes: quotes, newsByCode: newsByCode)
+        return Self.aggregate(orderedStocks: ordered, quotes: quotes, pagesByCode: pagesByCode)
     }
 
-    /// 순수 집계(테스트 대상). 입력 감정 → 무드/우세감정/주목소식 정렬.
+    /// 관심종목의 뉴스 첫 페이지를 코드별로 동시에 가져온다(서버는 종목 하나씩만 조회).
+    /// 한 종목 조회가 실패/무뉴스여도 브리핑 전체가 깨지지 않도록 빈 페이지로 흡수한다.
+    private func fetchFirstPages(codes: [String]) async throws -> [String: NewsPage] {
+        try await withThrowingTaskGroup(of: (String, NewsPage).self) { group in
+            for code in codes {
+                group.addTask {
+                    let page = (try? await news.fetchNewsPage(forStockCode: code, cursor: nil)) ?? .empty
+                    return (code, page)
+                }
+            }
+            var result: [String: NewsPage] = [:]
+            for try await (code, page) in group { result[code] = page }
+            return result
+        }
+    }
+
+    /// 순수 집계(테스트 대상). 입력 감정 → 무드/우세감정/주목소식 정렬 + 첫 페이지 커서 전달.
     static func aggregate(
         orderedStocks: [Stock],
         quotes: [String: Quote],
-        newsByCode: [String: [NewsItem]]
+        pagesByCode: [String: NewsPage]
     ) -> DailyBriefing {
         var totalPositive = 0, totalNeutral = 0, totalNegative = 0
         var briefings: [StockBriefing] = []
 
         for stock in orderedStocks {
-            let items = newsByCode[stock.code] ?? []
+            let page = pagesByCode[stock.code] ?? .empty
+            let items = page.items
             var positive = 0, neutral = 0, negative = 0
             for item in items {
                 switch item.sentiment {
@@ -61,8 +78,9 @@ struct LoadDailyBriefing: Sendable {
                     stock: stock,
                     quote: quotes[stock.code],
                     dominantSentiment: dominant,
-                    primaryNews: Array(ranked.prefix(2)),
-                    otherNews: Array(ranked.dropFirst(2))
+                    news: ranked,
+                    newsCursor: page.nextCursor,
+                    hasMoreNews: page.hasNext
                 )
             )
         }

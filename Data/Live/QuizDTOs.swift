@@ -12,11 +12,11 @@ struct QuizNextDTO: Decodable, Sendable {
     let question: Question?
     let answeredInCycle: Int
     let totalInCycle: Int
-    let nextAvailableAt: Date?
+    let nextAvailableAt: String?   // 서버 LocalDateTime(오프셋 없음) → String으로 받아 관대하게 파싱
 
     func toDomain() throws -> QuizNextState {
         if cooldown {
-            return .cooldown(nextAvailableAt: nextAvailableAt)
+            return .cooldown(nextAvailableAt: JSONCoding.parseKSTDate(nextAvailableAt))
         }
         guard let question else { throw RepositoryError.decoding }
         return .question(
@@ -47,7 +47,7 @@ struct QuizSubmitResponseDTO: Decodable, Sendable {
     let answeredInCycle: Int
     let totalInCycle: Int
     let completed: Bool
-    let nextAvailableAt: Date?
+    let nextAvailableAt: String?   // 서버 LocalDateTime(오프셋 없음)
 
     /// 서버 1-based choice → 도메인 0-based index.
     func toDomain() -> QuizAnswerResult {
@@ -61,20 +61,20 @@ struct QuizSubmitResponseDTO: Decodable, Sendable {
             answeredInCycle: answeredInCycle,
             totalInCycle: totalInCycle,
             completed: completed,
-            nextAvailableAt: nextAvailableAt
+            nextAvailableAt: JSONCoding.parseKSTDate(nextAvailableAt)
         )
     }
 }
 
 /// GET /api/v1/quizzes/last 응답(없으면 content=null).
 struct QuizLastDTO: Decodable, Sendable {
-    let takenAt: Date
+    let takenAt: String   // 서버 LocalDateTime(오프셋 없음)
     let correctCount: Int
     let earnedCapital: Int
 
     func toDomain() -> QuizCompletion {
         QuizCompletion(
-            takenAt: takenAt,
+            takenAt: JSONCoding.parseKSTDate(takenAt) ?? Date(),
             correctCount: correctCount,
             earnedCapital: .krw(earnedCapital)
         )
