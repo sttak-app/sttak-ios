@@ -54,9 +54,6 @@ final class AppContainer: Sendable {
             let config = AppConfig.default
             let tokenStore = KeychainTokenStore()
             let api = APIClient(config: config, tokenStore: tokenStore)
-            // 시세 공백 보충용 폴백에만 사용(캔들·quotes). 포트폴리오는 서버가 원본.
-            let store = MockLocalStore(cash: MockData.seedCash, holdings: MockData.seedHoldings, trades: MockData.seedTrades)
-            let mockMarket = MockMarketDataRepository(store: store)
 
             self.auth = LiveAuthRepository(
                 api: api,
@@ -64,7 +61,7 @@ final class AppContainer: Sendable {
                 socialLogin: KakaoLoginService(isConfigured: config.isKakaoConfigured)
             )
             self.news = LiveNewsRepository(api: api)
-            self.marketData = LiveMarketDataRepository(api: api, fallback: mockMarket)
+            self.marketData = LiveMarketDataRepository(api: api)
             self.chat = LiveChatRepository(api: api)
             self.retrospective = MockRetrospectiveRepository()
             // 퀴즈 보상은 서버가 적립(SSOT). 포트폴리오가 Live라 로컬 미러는 이중 적립 → 제거.
