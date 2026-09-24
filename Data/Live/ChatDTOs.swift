@@ -9,10 +9,16 @@ struct ChatRequestDTO: Encodable, Sendable {
     }
 
     let context: String         // "NEWS" | "CHART_SEGMENT" | "FREE"
+    /// 답변 근거가 될 뉴스 식별자. nil이면 인코딩에서 키가 빠진다(서버에선 optional).
+    let newsId: Int?
+    /// 질문이 가리키는 종목코드(뉴스·차트 구간). nil이면 키가 빠진다.
+    let stockCode: String?
     let history: [Message]
 
     init(context: ChatContext, history: [ChatMessage]) {
         self.context = context.apiValue
+        self.newsId = context.newsId
+        self.stockCode = context.stockCode
         self.history = history.map { message in
             Message(
                 role: message.role == .user ? "USER" : "ASSISTANT",

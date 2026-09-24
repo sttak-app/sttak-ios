@@ -140,6 +140,72 @@ final class LiveDTOMappingTests: XCTestCase {
         """.utf8)
     }
 
+    // MARK: 챗봇 요청 바디 (SendChatRequest) — 맥락 식별자를 함께 보내야 서버가 근거를 찾는다
+
+    /// 뉴스 맥락: context/stockCode/history. newsId는 값이 있을 때만 실린다.
+    func testChatRequest_newsContext_carriesStockCodeAndNewsId() throws {
+        let body = try encodedChatRequest(
+            context: .news(stockCode: "005930", newsId: 42),
+            text: "왜 올랐어요?"
+        )
+        XCTAssertEqual(body["context"] as? String, "NEWS")
+        XCTAssertEqual(body["stockCode"] as? String, "005930")
+        XCTAssertEqual(body["newsId"] as? Int, 42)
+
+        let history = try XCTUnwrap(body["history"] as? [[String: Any]])
+        XCTAssertEqual(history.count, 1)
+        XCTAssertEqual(history[0]["role"] as? String, "USER")
+        XCTAssertEqual(history[0]["text"] as? String, "왜 올랐어요?")
+        XCTAssertNotNil(history[0]["timestamp"])
+    }
+
+    /// 서버가 뉴스 id를 주지 않는 동안에도 stockCode는 실리고, newsId 키는 빠진다.
+    func testChatRequest_newsWithoutId_omitsNewsIdKey() throws {
+        let body = try encodedChatRequest(context: .news(stockCode: "000660", newsId: nil), text: "q")
+        XCTAssertEqual(body["stockCode"] as? String, "000660")
+        XCTAssertNil(body["newsId"], "newsId가 nil이면 키 자체가 빠져야 한다")
+    }
+
+    func testChatRequest_chartSegmentContext_carriesStockCode() throws {
+        let body = try encodedChatRequest(context: .chartSegment(stockCode: "035420"), text: "q")
+        XCTAssertEqual(body["context"] as? String, "CHART_SEGMENT")
+        XCTAssertEqual(body["stockCode"] as? String, "035420")
+        XCTAssertNil(body["newsId"])
+    }
+
+    /// 자유 질문은 종목·뉴스에 묶이지 않으므로 두 키 모두 빠진다.
+    func testChatRequest_freeContext_omitsBothIdentifiers() throws {
+        let body = try encodedChatRequest(context: .free, text: "q")
+        XCTAssertEqual(body["context"] as? String, "FREE")
+        XCTAssertNil(body["stockCode"])
+        XCTAssertNil(body["newsId"])
+    }
+
+    /// 멀티턴은 히스토리 순서와 역할을 그대로 보낸다.
+    func testChatRequest_multiTurnHistory_preservesOrderAndRoles() throws {
+        let messages = [
+            ChatMessage(role: .user, text: "첫 질문", timestamp: Date(timeIntervalSince1970: 0)),
+            ChatMessage(role: .assistant, text: "답변", timestamp: Date(timeIntervalSince1970: 1)),
+            ChatMessage(role: .user, text: "추가 질문", timestamp: Date(timeIntervalSince1970: 2))
+        ]
+        let data = try JSONCoding.encoder().encode(ChatRequestDTO(context: .free, history: messages))
+        let body = try XCTUnwrap(
+            try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        )
+        let history = try XCTUnwrap(body["history"] as? [[String: Any]])
+        XCTAssertEqual(history.map { $0["role"] as? String }, ["USER", "ASSISTANT", "USER"])
+        XCTAssertEqual(history.map { $0["text"] as? String }, ["첫 질문", "답변", "추가 질문"])
+    }
+
+    private func encodedChatRequest(context: ChatContext, text: String) throws -> [String: Any] {
+        let dto = ChatRequestDTO(
+            context: context,
+            history: [ChatMessage(role: .user, text: text, timestamp: Date(timeIntervalSince1970: 0))]
+        )
+        let data = try JSONCoding.encoder().encode(dto)
+        return try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+    }
+
     // MARK: 퀴즈 (서버 1-based → 도메인 0-based)
 
     func testQuizNextMapping_question() throws {

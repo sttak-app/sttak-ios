@@ -14,6 +14,8 @@ final class HomeViewModel {
     struct PresentedNews: Identifiable, Equatable {
         let id: Int
         let stockName: String
+        /// 챗봇이 서버에 넘길 종목 식별자.
+        let stockCode: String
         let news: NewsItem
     }
 
@@ -104,9 +106,11 @@ final class HomeViewModel {
     }
 
     /// 뉴스 상세 시트 표시.
-    func openNewsDetail(stockName: String, news: NewsItem) {
+    func openNewsDetail(stockName: String, stockCode: String, news: NewsItem) {
         presentationCounter += 1
-        presentedNews = PresentedNews(id: presentationCounter, stockName: stockName, news: news)
+        presentedNews = PresentedNews(
+            id: presentationCounter, stockName: stockName, stockCode: stockCode, news: news
+        )
     }
 
     func dismissNewsDetail() {

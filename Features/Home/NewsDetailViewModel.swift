@@ -24,6 +24,8 @@ final class NewsDetailViewModel {
 
     let news: NewsItem
     let stockName: String
+    /// 챗봇이 "어떤 종목의 뉴스인지"를 서버에 알리기 위한 코드.
+    private let stockCode: String
 
     var selectedTab: Tab = .easy {
         didSet {
@@ -43,20 +45,27 @@ final class NewsDetailViewModel {
     private var streamTask: Task<Void, Never>?
     private var turnCounter = 0
 
-    init(news: NewsItem, stockName: String, chat: ChatRepository) {
+    init(news: NewsItem, stockName: String, stockCode: String, chat: ChatRepository) {
         self.news = news
         self.stockName = stockName
+        self.stockCode = stockCode
         self.chat = chat
     }
 
     var isStreaming: Bool { streamingState == .streaming }
+
+    /// 챗봇에 넘기는 맥락. newsId는 서버 뉴스 응답에 id가 없어 아직 nil —
+    /// 백엔드가 NewsCardResponse에 id를 추가하면 여기만 채우면 된다.
+    private var chatContext: ChatContext {
+        .news(stockCode: stockCode, newsId: nil)
+    }
 
     func toggleTerm(_ index: Int) {
         if openTerms.contains(index) { openTerms.remove(index) } else { openTerms.insert(index) }
     }
 
     func loadSuggestions() async {
-        suggestedQuestions = (try? await chat.suggestedQuestions(for: .news)) ?? []
+        suggestedQuestions = (try? await chat.suggestedQuestions(for: chatContext)) ?? []
     }
 
     /// 질문 전송 → 스트리밍 소비. 진행 중이면 무시(중복 방지).
@@ -68,7 +77,7 @@ final class NewsDetailViewModel {
         let assistantIndex = appendTurn(role: .assistant, text: "")
         streamingState = .streaming
 
-        let stream = chat.ask(question: trimmed, context: .news)
+        let stream = chat.ask(question: trimmed, context: chatContext)
         streamTask = Task { [weak self] in
             do {
                 for try await chunk in stream {

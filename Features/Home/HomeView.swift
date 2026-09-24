@@ -38,7 +38,9 @@ struct HomeView: View {
         }
         .onChange(of: viewModel?.presentedNews?.id) { _, newID in
             if newID != nil, let presented = viewModel?.presentedNews {
-                detailViewModel = container.makeNewsDetailViewModel(news: presented.news, stockName: presented.stockName)
+                detailViewModel = container.makeNewsDetailViewModel(
+                    news: presented.news, stockName: presented.stockName, stockCode: presented.stockCode
+                )
             }
         }
     }
@@ -283,7 +285,11 @@ private struct FocusPager: View {
                         hasMore: viewModel.hasMoreNews(for: sb.id),
                         isLoadingMore: viewModel.isLoadingMore(for: sb.id),
                         onLoadMore: { Task { await viewModel.loadMore(for: sb.id) } },
-                        onNewsTap: { news in viewModel.openNewsDetail(stockName: sb.stock.name, news: news) }
+                        onNewsTap: { news in
+                            viewModel.openNewsDetail(
+                                stockName: sb.stock.name, stockCode: sb.stock.code, news: news
+                            )
+                        }
                     )
                     .padding(.horizontal, AppSpacing.lg)
                     .padding(.bottom, AppSpacing.lg)

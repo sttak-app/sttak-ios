@@ -12,9 +12,12 @@ final class NewsDetailViewModelTests: XCTestCase {
         )
     }
 
-    private func makeViewModel() -> NewsDetailViewModel {
-        // 빠른 스트리밍(지연 0)으로 결정적 테스트.
-        NewsDetailViewModel(news: sampleNews(), stockName: "삼성전자", chat: MockChatRepository(chunkDelay: .zero))
+    /// 기본은 지연 0(결정적). 취소 검증처럼 중간 상태가 필요하면 chunkDelay를 준다.
+    private func makeViewModel(chunkDelay: Duration = .zero) -> NewsDetailViewModel {
+        NewsDetailViewModel(
+            news: sampleNews(), stockName: "삼성전자", stockCode: "005930",
+            chat: MockChatRepository(chunkDelay: chunkDelay)
+        )
     }
 
     func testAsk_accumulatesFullAnswer_andCompletes() async throws {
@@ -33,7 +36,7 @@ final class NewsDetailViewModelTests: XCTestCase {
 
     func testCancel_stopsStreaming_noFurtherGrowth() async throws {
         // 지연이 있어야 중간에 취소 가능.
-        let vm = NewsDetailViewModel(news: sampleNews(), stockName: "삼", chat: MockChatRepository(chunkDelay: .milliseconds(5)))
+        let vm = makeViewModel(chunkDelay: .milliseconds(5))
         vm.ask("어려운 말 없이 설명해줘")
         try await Task.sleep(for: .milliseconds(20)) // 몇 글자 누적
         vm.cancelStreaming()
@@ -46,7 +49,7 @@ final class NewsDetailViewModelTests: XCTestCase {
     }
 
     func testReask_whileStreaming_isIgnored() async throws {
-        let vm = NewsDetailViewModel(news: sampleNews(), stockName: "삼", chat: MockChatRepository(chunkDelay: .milliseconds(5)))
+        let vm = makeViewModel(chunkDelay: .milliseconds(5))
         vm.ask("이게 왜 중요한가요?")
         vm.ask("주가에 어떤 영향이 있나요?") // 진행 중이라 무시되어야 함
         XCTAssertEqual(vm.messages.count, 2) // 한 쌍만
@@ -66,7 +69,7 @@ final class NewsDetailViewModelTests: XCTestCase {
     }
 
     func testTabSwitchAwayFromAI_cancelsStreaming() async throws {
-        let vm = NewsDetailViewModel(news: sampleNews(), stockName: "삼", chat: MockChatRepository(chunkDelay: .milliseconds(5)))
+        let vm = makeViewModel(chunkDelay: .milliseconds(5))
         vm.selectedTab = .ai
         vm.ask("이게 왜 중요한가요?")
         try await Task.sleep(for: .milliseconds(15))

@@ -56,7 +56,7 @@ private func _domainSmokeCheck() {
         referencePrice: .krw(72_000), filledPrice: .krw(72_000), filledAt: Date(),
         rejectedReason: nil, realizedProfit: .krw(20_000), retrospective: retro
     )
-    _ = ChatSession(id: "c1", context: .news, messages: [])
+    _ = ChatSession(id: "c1", context: .news(stockCode: "005930", newsId: 1), messages: [])
     _ = RankingSnapshot(id: "s1", entries: [], updatedAt: Date())
 }
 #endif

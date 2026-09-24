@@ -93,8 +93,8 @@ final class AppContainer: Sendable {
     }
 
     @MainActor
-    func makeNewsDetailViewModel(news: NewsItem, stockName: String) -> NewsDetailViewModel {
-        NewsDetailViewModel(news: news, stockName: stockName, chat: chat)
+    func makeNewsDetailViewModel(news: NewsItem, stockName: String, stockCode: String) -> NewsDetailViewModel {
+        NewsDetailViewModel(news: news, stockName: stockName, stockCode: stockCode, chat: chat)
     }
 
     @MainActor
