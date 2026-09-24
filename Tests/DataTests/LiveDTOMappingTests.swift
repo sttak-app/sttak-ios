@@ -87,6 +87,59 @@ final class LiveDTOMappingTests: XCTestCase {
         XCTAssertEqual(stocks[0].id, "005930")
     }
 
+    // MARK: 캔들 — OpenAPI는 date를 date-time으로만 선언하고 오프셋 유무를 명시하지 않는다.
+    //             세 형태(오프셋 있음/없음/LocalDate) 모두 같은 KST 거래일로 읽혀야 한다.
+
+    func testCandleMapping_offsetDate_readsAsKSTTradingDay() throws {
+        let feed = try decoder.decode(CandleFeedDTO.self, from: candleFeedJSON(date: "2026-09-19T00:00:00Z"))
+        let candle = try XCTUnwrap(XCTUnwrap(feed.candles.first).toDomain())
+        XCTAssertEqual(Formatters.chartAxisDate(candle.date, unit: .day), "9/19")
+        XCTAssertEqual(candle.close, 71_200)
+        XCTAssertEqual(candle.volume, 12_345_678)
+    }
+
+    /// 오프셋 없는 LocalDateTime(퀴즈·랭킹과 같은 형태)도 KST 자정으로 읽힌다.
+    func testCandleMapping_offsetlessLocalDateTime_doesNotFailDecoding() throws {
+        let feed = try decoder.decode(CandleFeedDTO.self, from: candleFeedJSON(date: "2026-09-19T00:00:00"))
+        let candle = try XCTUnwrap(XCTUnwrap(feed.candles.first).toDomain())
+        XCTAssertEqual(Formatters.chartAxisDate(candle.date, unit: .day), "9/19")
+    }
+
+    /// 일봉이라 LocalDate만 올 수도 있다.
+    func testCandleMapping_localDateOnly() throws {
+        let feed = try decoder.decode(CandleFeedDTO.self, from: candleFeedJSON(date: "2026-09-19"))
+        let candle = try XCTUnwrap(XCTUnwrap(feed.candles.first).toDomain())
+        XCTAssertEqual(Formatters.chartAxisDate(candle.date, unit: .day), "9/19")
+    }
+
+    /// 날짜를 못 읽은 봉은 그 봉만 버린다(피드 전체 실패 금지).
+    func testCandleMapping_unparsableDate_dropsOnlyThatCandle() throws {
+        let json = Data("""
+        {"candles": [
+          {"date": "2026-09-18T00:00:00Z", "open": 70000, "high": 71000, "low": 69500, "close": 70500, "volume": 100},
+          {"date": "날짜아님", "open": 70500, "high": 71500, "low": 70000, "close": 71200, "volume": 200}
+        ], "fetchedAt": null}
+        """.utf8)
+        let candles = try decoder.decode(CandleFeedDTO.self, from: json).candles.compactMap { $0.toDomain() }
+        XCTAssertEqual(candles.count, 1)
+        XCTAssertEqual(Formatters.chartAxisDate(try XCTUnwrap(candles.first).date, unit: .day), "9/18")
+    }
+
+    /// fetchedAt이 오프셋 없는 형태로 와도 피드 디코딩은 성공해야 한다(앱은 이 값을 쓰지 않는다).
+    func testCandleMapping_offsetlessFetchedAt_stillDecodes() throws {
+        let json = Data("""
+        {"candles": [], "fetchedAt": "2026-09-19T15:04:05"}
+        """.utf8)
+        XCTAssertTrue(try decoder.decode(CandleFeedDTO.self, from: json).candles.isEmpty)
+    }
+
+    private func candleFeedJSON(date: String) -> Data {
+        Data("""
+        {"candles": [{"date": "\(date)", "open": 70500, "high": 71500,
+          "low": 70000, "close": 71200, "volume": 12345678}], "fetchedAt": null}
+        """.utf8)
+    }
+
     // MARK: 퀴즈 (서버 1-based → 도메인 0-based)
 
     func testQuizNextMapping_question() throws {
