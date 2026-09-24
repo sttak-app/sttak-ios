@@ -27,27 +27,41 @@ private struct ChartStack: View {
         Dictionary(candles.enumerated().map { ($1.date, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
+    /// 가격 y축 라벨이 차지하는 대략 폭. 자릿수에 따라 달라지므로("72,500" vs "1,200,000")
+    /// 큰 쪽에 맞춰 보수적으로 잡는다 — 과소추정하면 끝 라벨이 잘린다.
+    /// (ChartDateAxis.edgeSafetyMargin이 남은 오차를 흡수한다)
+    private static let yAxisLabelWidth: CGFloat = 60
+
     var body: some View {
         let indexByDate = self.indexByDate
-        VStack(spacing: 6) {
-            PriceChart(
-                candles: candles, overlay: overlay, yDomain: yDomain,
-                xDomain: xDomain, indexByDate: indexByDate, onSelectCandle: onSelectCandle
-            )
-            if !overlay.rsi.isEmpty {
-                RSISubPanel(points: overlay.rsi, xDomain: xDomain, indexByDate: indexByDate)
-                    .frame(height: 64)
-            } else if overlay.showVolume {
-                VolumeSubPanel(candles: candles, xDomain: xDomain)
-                    .frame(height: 64)
+        // 날짜 라벨을 몇 개 찍을 수 있고 양끝 라벨에 얼마나 여유가 필요한지는 폭에 달렸다.
+        GeometryReader { geo in
+            let plotWidth = max(0, geo.size.width - Self.yAxisLabelWidth)
+            let dateAxis = ChartDateAxis.make(for: candles, plotWidth: plotWidth)
+            let xDomain = xDomain(dateAxis: dateAxis, plotWidth: plotWidth)
+            VStack(spacing: 6) {
+                PriceChart(
+                    candles: candles, overlay: overlay, yDomain: yDomain,
+                    xDomain: xDomain, indexByDate: indexByDate,
+                    dateAxis: dateAxis, onSelectCandle: onSelectCandle
+                )
+                if !overlay.rsi.isEmpty {
+                    RSISubPanel(points: overlay.rsi, xDomain: xDomain, indexByDate: indexByDate)
+                        .frame(height: 64)
+                } else if overlay.showVolume {
+                    VolumeSubPanel(candles: candles, xDomain: xDomain)
+                        .frame(height: 64)
+                }
             }
         }
     }
 
-    /// 인덱스 x 도메인(양끝 봉이 잘리지 않게 ±0.5 여백).
-    private var xDomain: ClosedRange<Double> {
+    /// 인덱스 x 도메인. 기본은 양끝 봉이 잘리지 않게 ±0.5봉이고, 첫·마지막 봉의 날짜 라벨이
+    /// 중앙 정렬로도 플롯을 벗어나지 않도록 필요한 만큼 더 벌린다.
+    private func xDomain(dateAxis: ChartDateAxis, plotWidth: CGFloat) -> ClosedRange<Double> {
         guard !candles.isEmpty else { return -0.5...0.5 }
-        return -0.5...(Double(candles.count) - 0.5)
+        let inset = dateAxis.domainInset(plotWidth: plotWidth, candleCount: candles.count)
+        return (-0.5 - inset)...(Double(candles.count) - 0.5 + inset)
     }
 
     /// 가격 Y 범위(캔들 + 밴드 + 지지저항 포함, 약간 여백).
@@ -69,6 +83,7 @@ private struct PriceChart: View {
     let yDomain: ClosedRange<Double>
     let xDomain: ClosedRange<Double>
     let indexByDate: [Date: Int]
+    let dateAxis: ChartDateAxis
     let onSelectCandle: (Date) -> Void
 
     /// 오버레이 날짜를 인덱스로. 슬라이스 밖(regionEnd 등)이면 양끝으로 클램프.
@@ -77,6 +92,12 @@ private struct PriceChart: View {
     }
     private func xClamped(_ date: Date) -> Double {
         x(date) ?? (candles.isEmpty ? 0 : Double(candles.count - 1))
+    }
+
+    /// 눈금 인덱스 → KST 날짜 라벨. 슬라이스 밖 인덱스면 라벨 없음.
+    private func dateLabel(atIndex index: Int) -> String? {
+        guard candles.indices.contains(index) else { return nil }
+        return Formatters.chartAxisDate(candles[index].date, unit: dateAxis.unit)
     }
 
     var body: some View {
@@ -181,7 +202,29 @@ private struct PriceChart: View {
         }
         .chartYScale(domain: yDomain)
         .chartXScale(domain: xDomain)
-        .chartXAxis(.hidden)
+        // x축은 인덱스 스케일이라 눈금을 직접 고른다(ChartDateAxis). 라벨은 KST 거래일.
+        //
+        // 라벨을 봉 중심에 맞추려면 세 가지가 필요하다. Swift Charts는 x축 라벨을 눈금에 **좌측
+        // 정렬**로 붙이므로(anchor: .top은 x축에선 적용되지 않는다) 기본 상태면 봉보다 오른쪽으로
+        // 텍스트 폭의 절반만큼 밀린다.
+        //  - horizontalSpacing: 0 → 눈금과 라벨 사이 기본 여백(약 5pt)을 없애 좌측 끝을 눈금에 정확히 붙인다.
+        //  - 고정폭 frame         → 글자수가 달라도(9/1 vs 12/31) 밀리는 양이 일정해진다.
+        //  - offset(-폭/2)        → 그 일정한 양을 되돌려 라벨 중심이 봉 중심에 오게 한다.
+        // collisionResolution은 비활성 — 눈금은 이미 겹치지 않게 골랐고, 자동 해소가 끝 라벨을 지워버린다.
+        .chartXAxis {
+            AxisMarks(values: dateAxis.tickIndices.map(Double.init)) { value in
+                AxisGridLine().foregroundStyle(AppColor.hairline2)
+                AxisValueLabel(collisionResolution: .disabled, horizontalSpacing: 0) {
+                    if let raw = value.as(Double.self), let label = dateLabel(atIndex: Int(raw)) {
+                        Text(label)
+                            .font(AppFont.microCaption)
+                            .foregroundStyle(AppColor.textMuted2)
+                            .frame(width: dateAxis.labelWidth)
+                            .offset(x: -dateAxis.labelWidth / 2)
+                    }
+                }
+            }
+        }
         .chartYAxis {
             AxisMarks(position: .trailing) { value in
                 AxisGridLine().foregroundStyle(AppColor.hairline2)
