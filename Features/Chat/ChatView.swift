@@ -41,7 +41,8 @@ struct ChatView: View {
                     ForEach(Array(viewModel.messages.enumerated()), id: \.offset) { index, message in
                         Bubble(
                             message: message,
-                            showTyping: index == viewModel.messages.count - 1 && viewModel.isAwaitingFirstChunk
+                            showTyping: index == viewModel.messages.count - 1 && viewModel.isAwaitingAnswer,
+                            stageText: viewModel.stage?.displayText
                         )
                         .id(index)
                     }
@@ -111,6 +112,8 @@ struct ChatView: View {
 private struct Bubble: View {
     let message: ChatMessage
     let showTyping: Bool
+    /// 완성본 대기 중 보여줄 진행 단계 문구(stage 이벤트의 마지막 값).
+    let stageText: String?
 
     private var isUser: Bool { message.role == .user }
 
@@ -119,7 +122,12 @@ private struct Bubble: View {
             if isUser { Spacer(minLength: AppSpacing.xl) }
             Group {
                 if showTyping {
-                    TypingDots()
+                    HStack(spacing: AppSpacing.sm) {
+                        TypingDots()
+                        if let stageText {
+                            Text(stageText).font(AppFont.microCaption).foregroundStyle(AppColor.textMuted2)
+                        }
+                    }
                 } else {
                     Text(message.text)
                         .font(AppFont.bodyStrong).foregroundStyle(isUser ? .white : AppColor.ink)

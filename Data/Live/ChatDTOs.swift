@@ -34,9 +34,19 @@ struct ChatSuggestionsDTO: Decodable, Sendable {
     let questions: [String]
 }
 
-/// SSE `event: token` 페이로드.
-struct ChatTokenEventDTO: Decodable, Sendable {
+/// SSE `event: stage` 페이로드 — "generating" | "refining" | "verifying" (소문자).
+struct ChatStageEventDTO: Decodable, Sendable {
+    let stage: String
+}
+
+/// SSE `event: answer` 페이로드 — 가드레일을 통과한 완성 본문 전체(1회).
+struct ChatAnswerEventDTO: Decodable, Sendable {
     let text: String
+}
+
+/// SSE `event: error` 페이로드 — 사용자에게 그대로 노출 가능한 문구(code 필드 없음).
+struct ChatErrorEventDTO: Decodable, Sendable {
+    let message: String?
 }
 
 extension ChatContext {

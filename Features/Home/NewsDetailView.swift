@@ -292,7 +292,8 @@ private struct AITab: View {
                         ForEach(viewModel.messages) { turn in
                             ChatBubble(
                                 turn: turn,
-                                showTyping: turn.role == .assistant && turn.text.isEmpty && viewModel.isStreaming
+                                showTyping: turn.role == .assistant && turn.text.isEmpty && viewModel.isStreaming,
+                                stageText: viewModel.stage?.displayText
                             )
                             .id(turn.id)
                         }
@@ -367,6 +368,8 @@ private struct AITab: View {
 private struct ChatBubble: View {
     let turn: NewsDetailViewModel.ChatTurn
     let showTyping: Bool
+    /// 완성본 대기 중 보여줄 진행 단계 문구(stage 이벤트의 마지막 값).
+    let stageText: String?
 
     private var isUser: Bool { turn.role == .user }
 
@@ -375,7 +378,12 @@ private struct ChatBubble: View {
             if isUser { Spacer(minLength: 40) }
             Group {
                 if showTyping {
-                    TypingIndicator()
+                    HStack(spacing: AppSpacing.sm) {
+                        TypingIndicator()
+                        if let stageText {
+                            Text(stageText).font(AppFont.microCaption).foregroundStyle(AppColor.textMuted2)
+                        }
+                    }
                 } else {
                     Text(turn.text).font(AppFont.bodyStrong).lineSpacing(4)
                 }

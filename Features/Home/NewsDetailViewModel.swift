@@ -38,6 +38,8 @@ final class NewsDetailViewModel {
     // AI
     private(set) var messages: [ChatTurn] = []
     private(set) var streamingState: StreamingState = .idle
+    /// 서버가 보낸 마지막 진행 단계 — 스트리밍 중 대기 문구로 표시한다.
+    private(set) var stage: ChatStage?
     private(set) var suggestedQuestions: [String] = []
     var chatInput: String = ""
 
@@ -76,19 +78,25 @@ final class NewsDetailViewModel {
         appendTurn(role: .user, text: trimmed)
         let assistantIndex = appendTurn(role: .assistant, text: "")
         streamingState = .streaming
+        stage = nil
 
         let stream = chat.ask(question: trimmed, context: chatContext)
         streamTask = Task { [weak self] in
             do {
-                for try await chunk in stream {
+                for try await event in stream {
                     if Task.isCancelled { break }
-                    self?.append(chunk, at: assistantIndex)
+                    switch event {
+                    case .stage(let stage):
+                        self?.stage = stage
+                    case .answer(let answer):
+                        self?.setAnswer(answer, at: assistantIndex)
+                    }
                 }
+                self?.stage = nil
                 self?.streamingState = Task.isCancelled ? .cancelled : .done
             } catch {
-                self?.streamingState = Task.isCancelled
-                    ? .cancelled
-                    : .error("답변을 받지 못했어요. 잠시 후 다시 시도해 주세요.")
+                self?.stage = nil
+                self?.finishWithError(error)
             }
         }
     }
@@ -121,8 +129,18 @@ final class NewsDetailViewModel {
         return messages.count - 1
     }
 
-    private func append(_ chunk: String, at index: Int) {
+    private func setAnswer(_ text: String, at index: Int) {
         guard index < messages.count else { return }
-        messages[index].text += chunk
+        messages[index].text = text
+    }
+
+    private func finishWithError(_ error: Error) {
+        if Task.isCancelled { streamingState = .cancelled; return }
+        // 서버 error 이벤트의 message는 사용자 노출 가능 문구(백엔드 계약) — 그대로 보여준다.
+        if let repoError = error as? RepositoryError, case let .server(message?) = repoError {
+            streamingState = .error(message)
+        } else {
+            streamingState = .error("답변을 받지 못했어요. 잠시 후 다시 시도해 주세요.")
+        }
     }
 }
