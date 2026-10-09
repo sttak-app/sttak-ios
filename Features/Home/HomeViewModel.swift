@@ -24,6 +24,9 @@ final class HomeViewModel {
     private(set) var isRefreshing = false
     private(set) var assetText = ""
     private(set) var presentedNews: PresentedNews?
+    /// 공용 챗봇 시트 표시 여부. 뉴스 시트처럼 관찰 가능한 VM 상태로 둔다 —
+    /// @State Bool 기반이던 시절, iOS 27에서 상태 변경이 재렌더로 이어지지 않는 간헐 문제가 있었다.
+    var isChatPresented = false
     private var presentationCounter = 0
 
     // 종목별 무한 스크롤 상태(첫 페이지는 브리핑이 제공, 이후는 커서로 이어 붙인다).
