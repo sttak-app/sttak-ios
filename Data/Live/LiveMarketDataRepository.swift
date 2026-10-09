@@ -44,7 +44,8 @@ struct LiveMarketDataRepository: MarketDataRepository {
                 URLQueryItem(name: "period", value: "1Y")
             ])
         )
-        return feed.candles.map { $0.toDomain() }
+        // 날짜를 못 읽은 봉은 제외(CandleDTO 주석) — 차트가 통째로 비는 것보다 낫다.
+        return feed.candles.compactMap { $0.toDomain() }
     }
 
     // MARK: 서버 엔드포인트 없음 — 기초정보(PER/PBR/시총)는 아직 없음.

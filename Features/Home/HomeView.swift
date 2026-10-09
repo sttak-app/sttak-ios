@@ -6,7 +6,6 @@ struct HomeView: View {
     @State private var viewModel: HomeViewModel?
     @State private var detailViewModel: NewsDetailViewModel?
     @State private var chatViewModel: ChatViewModel?
-    @State private var showChat = false
 
     var body: some View {
         ZStack {
@@ -23,6 +22,8 @@ struct HomeView: View {
         .task {
             if viewModel == nil {
                 viewModel = container.makeHomeViewModel()
+                // 시트 콘텐츠는 미리 준비 — 버튼 탭은 VM 상태 플립만 수행한다(아래 isChatPresented 주석).
+                chatViewModel = container.makeChatViewModel()
                 await viewModel?.load()
             }
         }
@@ -31,14 +32,16 @@ struct HomeView: View {
                 NewsDetailView(viewModel: detailViewModel, onClose: { viewModel?.dismissNewsDetail() })
             }
         }
-        .bottomSheet(isPresented: $showChat) {
+        .bottomSheet(isPresented: chatBinding) {
             if let chatViewModel {
-                ChatView(viewModel: chatViewModel, onClose: { showChat = false })
+                ChatView(viewModel: chatViewModel, onClose: { viewModel?.isChatPresented = false })
             }
         }
         .onChange(of: viewModel?.presentedNews?.id) { _, newID in
             if newID != nil, let presented = viewModel?.presentedNews {
-                detailViewModel = container.makeNewsDetailViewModel(news: presented.news, stockName: presented.stockName)
+                detailViewModel = container.makeNewsDetailViewModel(
+                    news: presented.news, stockName: presented.stockName, stockCode: presented.stockCode
+                )
             }
         }
     }
@@ -46,8 +49,7 @@ struct HomeView: View {
     /// 떠있는 "AI에게 묻기" 버튼(우하단). 탭 → 공용 챗봇 시트.
     private var aiButton: some View {
         Button {
-            if chatViewModel == nil { chatViewModel = container.makeChatViewModel() }
-            showChat = true
+            viewModel?.isChatPresented = true
         } label: {
             HStack(spacing: AppSpacing.xs) {
                 Image(systemName: "sparkles").font(.system(size: 14)).foregroundStyle(AppColor.accentBright)
@@ -66,6 +68,14 @@ struct HomeView: View {
         Binding(
             get: { viewModel?.presentedNews != nil },
             set: { if !$0 { viewModel?.dismissNewsDetail() } }
+        )
+    }
+
+    /// 챗봇 시트도 뉴스 시트와 동일하게 VM 관찰 상태 → 계산 바인딩으로 연결한다.
+    private var chatBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel?.isChatPresented ?? false },
+            set: { viewModel?.isChatPresented = $0 }
         )
     }
 
@@ -283,7 +293,11 @@ private struct FocusPager: View {
                         hasMore: viewModel.hasMoreNews(for: sb.id),
                         isLoadingMore: viewModel.isLoadingMore(for: sb.id),
                         onLoadMore: { Task { await viewModel.loadMore(for: sb.id) } },
-                        onNewsTap: { news in viewModel.openNewsDetail(stockName: sb.stock.name, news: news) }
+                        onNewsTap: { news in
+                            viewModel.openNewsDetail(
+                                stockName: sb.stock.name, stockCode: sb.stock.code, news: news
+                            )
+                        }
                     )
                     .padding(.horizontal, AppSpacing.lg)
                     .padding(.bottom, AppSpacing.lg)

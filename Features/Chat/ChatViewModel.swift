@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// 공용 챗봇(멀티턴). 메시지 목록을 유지하고 히스토리를 보내 답변을 스트리밍한다.
-/// 전송→스트리밍→누적→다음 턴. 취소(시트 닫힘)·에러·재진입은 커밋 12 패턴.
+/// 공용 챗봇(멀티턴). 메시지 목록을 유지하고 히스토리를 보내 답변을 받는다.
+/// 서버는 진행 단계(stage)를 보내다 완성본(answer)을 한 번에 주므로,
+/// 대기 중에는 단계 문구를 보여주고 본문은 일괄 렌더링한다. 취소·에러·재진입은 커밋 12 패턴.
 @MainActor
 @Observable
 final class ChatViewModel {
@@ -13,6 +14,8 @@ final class ChatViewModel {
     var input: String = ""
     private(set) var suggestions: [String] = []
     private(set) var streamingState: StreamingState = .idle
+    /// 서버가 보낸 마지막 진행 단계 — 스트리밍 중 대기 문구로 표시한다.
+    private(set) var stage: ChatStage?
 
     private let chat: ChatRepository
     private let context: ChatContext
@@ -27,8 +30,8 @@ final class ChatViewModel {
 
     var isStreaming: Bool { streamingState == .streaming }
     var errorMessage: String? { if case let .error(message) = streamingState { return message }; return nil }
-    /// 빈 어시스턴트 말풍선(스트리밍 대기) 여부 — 타이핑 인디케이터 표시용.
-    var isAwaitingFirstChunk: Bool {
+    /// 빈 어시스턴트 말풍선(완성본 대기) 여부 — 타이핑 인디케이터 표시용.
+    var isAwaitingAnswer: Bool {
         isStreaming && (messages.last.map { $0.role == .assistant && $0.text.isEmpty } ?? false)
     }
 
@@ -46,20 +49,28 @@ final class ChatViewModel {
 
         messages.append(ChatMessage(role: .user, text: text, timestamp: Date()))
         let history = messages                              // 사용자 발화까지 포함
-        messages.append(ChatMessage(role: .assistant, text: "", timestamp: Date())) // 스트리밍 placeholder
+        messages.append(ChatMessage(role: .assistant, text: "", timestamp: Date())) // 답변 placeholder
         let assistantIndex = messages.count - 1
         streamingState = .streaming
+        stage = nil
 
         let stream = chat.streamReply(history: history, context: context)
         streamTask = Task { [weak self] in
             do {
-                for try await chunk in stream {
+                for try await event in stream {
                     if Task.isCancelled { break }
-                    self?.appendChunk(chunk, at: assistantIndex)
+                    switch event {
+                    case .stage(let stage):
+                        self?.stage = stage
+                    case .answer(let answer):
+                        self?.setAnswer(answer, at: assistantIndex)
+                    }
                 }
+                self?.stage = nil
                 self?.streamingState = Task.isCancelled ? .cancelled : .done
             } catch {
-                self?.finishWithError(at: assistantIndex)
+                self?.stage = nil
+                self?.finishWithError(error)
             }
         }
     }
@@ -80,14 +91,19 @@ final class ChatViewModel {
     }
 
     // MARK: 내부
-    private func appendChunk(_ chunk: String, at index: Int) {
+    private func setAnswer(_ text: String, at index: Int) {
         guard messages.indices.contains(index) else { return }
         let existing = messages[index]
-        messages[index] = ChatMessage(role: .assistant, text: existing.text + chunk, timestamp: existing.timestamp)
+        messages[index] = ChatMessage(role: .assistant, text: text, timestamp: existing.timestamp)
     }
 
-    private func finishWithError(at index: Int) {
+    private func finishWithError(_ error: Error) {
         if Task.isCancelled { streamingState = .cancelled; return }
-        streamingState = .error("답변을 받지 못했어요. 잠시 후 다시 시도해 주세요.")
+        // 서버 error 이벤트의 message는 사용자 노출 가능 문구(백엔드 계약) — 그대로 보여준다.
+        if let repoError = error as? RepositoryError, case let .server(message?) = repoError {
+            streamingState = .error(message)
+        } else {
+            streamingState = .error("답변을 받지 못했어요. 잠시 후 다시 시도해 주세요.")
+        }
     }
 }

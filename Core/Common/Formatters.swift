@@ -2,6 +2,35 @@ import Foundation
 
 /// 표현 계층 숫자 포맷터(가격·등락률 등). 도메인은 값만, 포맷은 여기서.
 enum Formatters {
+    /// 한국 시장 타임존. 서버는 캔들 날짜를 UTC 시각으로 주므로, 기기 타임존이 무엇이든
+    /// 거래일은 KST로 읽어야 날짜가 하루 밀리지 않는다.
+    static let koreaTimeZone = TimeZone(identifier: "Asia/Seoul") ?? .gmt
+
+    /// KST 고정 그레고리력. 거래일 표시·경계 판정에 쓴다.
+    static let koreaCalendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = koreaTimeZone
+        return calendar
+    }()
+
+    /// 차트 x축 날짜 라벨 단위.
+    enum ChartDateUnit {
+        case day, month, year
+    }
+
+    /// 차트 x축 날짜 라벨(KST 기준). 예: .day → "9/19", .month → "9월", .year → "26년".
+    static func chartAxisDate(_ date: Date, unit: ChartDateUnit) -> String {
+        let parts = koreaCalendar.dateComponents([.year, .month, .day], from: date)
+        switch unit {
+        case .day:
+            return "\(parts.month ?? 0)/\(parts.day ?? 0)"
+        case .month:
+            return "\(parts.month ?? 0)월"
+        case .year:
+            return String(format: "%02d년", (parts.year ?? 0) % 100)
+        }
+    }
+
     /// 천 단위 구분 정수 문자열. 예: 71200 → "71,200".
     static func grouped(_ value: Int) -> String {
         let formatter = NumberFormatter()

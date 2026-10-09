@@ -49,10 +49,11 @@ struct LiveAuthRepository: AuthRepository {
     }
 
     func deleteAccount() async throws {
-        // 탈퇴 계약(DELETE /me)은 백엔드 미확정 — 엔드포인트 부재(404)는 로컬 정리로 진행.
+        // 탈퇴 계약(DELETE /me)은 백엔드 미구현 — 현 서버는 GET만 있는 경로라 405를 반환한다
+        // (405는 RepositoryError.unknown으로 매핑). 404/405 모두 로컬 정리로 진행.
         do {
             try await api.requestVoid(.delete("/api/v1/me"))
-        } catch RepositoryError.notFound {
+        } catch RepositoryError.notFound, RepositoryError.unknown {
             // 서버 미구현 — 로컬 세션만 정리.
         }
         await tokenStore.clearTokens()

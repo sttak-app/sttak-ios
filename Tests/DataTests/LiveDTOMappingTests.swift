@@ -87,6 +87,125 @@ final class LiveDTOMappingTests: XCTestCase {
         XCTAssertEqual(stocks[0].id, "005930")
     }
 
+    // MARK: 캔들 — OpenAPI는 date를 date-time으로만 선언하고 오프셋 유무를 명시하지 않는다.
+    //             세 형태(오프셋 있음/없음/LocalDate) 모두 같은 KST 거래일로 읽혀야 한다.
+
+    func testCandleMapping_offsetDate_readsAsKSTTradingDay() throws {
+        let feed = try decoder.decode(CandleFeedDTO.self, from: candleFeedJSON(date: "2026-09-19T00:00:00Z"))
+        let candle = try XCTUnwrap(XCTUnwrap(feed.candles.first).toDomain())
+        XCTAssertEqual(Formatters.chartAxisDate(candle.date, unit: .day), "9/19")
+        XCTAssertEqual(candle.close, 71_200)
+        XCTAssertEqual(candle.volume, 12_345_678)
+    }
+
+    /// 오프셋 없는 LocalDateTime(퀴즈·랭킹과 같은 형태)도 KST 자정으로 읽힌다.
+    func testCandleMapping_offsetlessLocalDateTime_doesNotFailDecoding() throws {
+        let feed = try decoder.decode(CandleFeedDTO.self, from: candleFeedJSON(date: "2026-09-19T00:00:00"))
+        let candle = try XCTUnwrap(XCTUnwrap(feed.candles.first).toDomain())
+        XCTAssertEqual(Formatters.chartAxisDate(candle.date, unit: .day), "9/19")
+    }
+
+    /// 일봉이라 LocalDate만 올 수도 있다.
+    func testCandleMapping_localDateOnly() throws {
+        let feed = try decoder.decode(CandleFeedDTO.self, from: candleFeedJSON(date: "2026-09-19"))
+        let candle = try XCTUnwrap(XCTUnwrap(feed.candles.first).toDomain())
+        XCTAssertEqual(Formatters.chartAxisDate(candle.date, unit: .day), "9/19")
+    }
+
+    /// 날짜를 못 읽은 봉은 그 봉만 버린다(피드 전체 실패 금지).
+    func testCandleMapping_unparsableDate_dropsOnlyThatCandle() throws {
+        let json = Data("""
+        {"candles": [
+          {"date": "2026-09-18T00:00:00Z", "open": 70000, "high": 71000, "low": 69500, "close": 70500, "volume": 100},
+          {"date": "날짜아님", "open": 70500, "high": 71500, "low": 70000, "close": 71200, "volume": 200}
+        ], "fetchedAt": null}
+        """.utf8)
+        let candles = try decoder.decode(CandleFeedDTO.self, from: json).candles.compactMap { $0.toDomain() }
+        XCTAssertEqual(candles.count, 1)
+        XCTAssertEqual(Formatters.chartAxisDate(try XCTUnwrap(candles.first).date, unit: .day), "9/18")
+    }
+
+    /// fetchedAt이 오프셋 없는 형태로 와도 피드 디코딩은 성공해야 한다(앱은 이 값을 쓰지 않는다).
+    func testCandleMapping_offsetlessFetchedAt_stillDecodes() throws {
+        let json = Data("""
+        {"candles": [], "fetchedAt": "2026-09-19T15:04:05"}
+        """.utf8)
+        XCTAssertTrue(try decoder.decode(CandleFeedDTO.self, from: json).candles.isEmpty)
+    }
+
+    private func candleFeedJSON(date: String) -> Data {
+        Data("""
+        {"candles": [{"date": "\(date)", "open": 70500, "high": 71500,
+          "low": 70000, "close": 71200, "volume": 12345678}], "fetchedAt": null}
+        """.utf8)
+    }
+
+    // MARK: 챗봇 요청 바디 (SendChatRequest) — 맥락 식별자를 함께 보내야 서버가 근거를 찾는다
+
+    /// 뉴스 맥락: context/stockCode/history. newsId는 값이 있을 때만 실린다.
+    func testChatRequest_newsContext_carriesStockCodeAndNewsId() throws {
+        let body = try encodedChatRequest(
+            context: .news(stockCode: "005930", newsId: 42),
+            text: "왜 올랐어요?"
+        )
+        XCTAssertEqual(body["context"] as? String, "NEWS")
+        XCTAssertEqual(body["stockCode"] as? String, "005930")
+        XCTAssertEqual(body["newsId"] as? Int, 42)
+
+        let history = try XCTUnwrap(body["history"] as? [[String: Any]])
+        XCTAssertEqual(history.count, 1)
+        XCTAssertEqual(history[0]["role"] as? String, "USER")
+        XCTAssertEqual(history[0]["text"] as? String, "왜 올랐어요?")
+        XCTAssertNotNil(history[0]["timestamp"])
+    }
+
+    /// 서버가 뉴스 id를 주지 않는 동안에도 stockCode는 실리고, newsId 키는 빠진다.
+    func testChatRequest_newsWithoutId_omitsNewsIdKey() throws {
+        let body = try encodedChatRequest(context: .news(stockCode: "000660", newsId: nil), text: "q")
+        XCTAssertEqual(body["stockCode"] as? String, "000660")
+        XCTAssertNil(body["newsId"], "newsId가 nil이면 키 자체가 빠져야 한다")
+    }
+
+    func testChatRequest_chartSegmentContext_carriesStockCode() throws {
+        let body = try encodedChatRequest(context: .chartSegment(stockCode: "035420"), text: "q")
+        XCTAssertEqual(body["context"] as? String, "CHART_SEGMENT")
+        XCTAssertEqual(body["stockCode"] as? String, "035420")
+        XCTAssertNil(body["newsId"])
+    }
+
+    /// 자유 질문은 종목·뉴스에 묶이지 않으므로 두 키 모두 빠진다.
+    func testChatRequest_freeContext_omitsBothIdentifiers() throws {
+        let body = try encodedChatRequest(context: .free, text: "q")
+        XCTAssertEqual(body["context"] as? String, "FREE")
+        XCTAssertNil(body["stockCode"])
+        XCTAssertNil(body["newsId"])
+    }
+
+    /// 멀티턴은 히스토리 순서와 역할을 그대로 보낸다.
+    func testChatRequest_multiTurnHistory_preservesOrderAndRoles() throws {
+        let messages = [
+            ChatMessage(role: .user, text: "첫 질문", timestamp: Date(timeIntervalSince1970: 0)),
+            ChatMessage(role: .assistant, text: "답변", timestamp: Date(timeIntervalSince1970: 1)),
+            ChatMessage(role: .user, text: "추가 질문", timestamp: Date(timeIntervalSince1970: 2))
+        ]
+        let data = try JSONCoding.encoder().encode(ChatRequestDTO(context: .free, history: messages))
+        let body = try XCTUnwrap(
+            try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        )
+        let history = try XCTUnwrap(body["history"] as? [[String: Any]])
+        XCTAssertEqual(history.map { $0["role"] as? String }, ["USER", "ASSISTANT", "USER"])
+        XCTAssertEqual(history.map { $0["text"] as? String }, ["첫 질문", "답변", "추가 질문"])
+    }
+
+    private func encodedChatRequest(context: ChatContext, text: String) throws -> [String: Any] {
+        let dto = ChatRequestDTO(
+            context: context,
+            history: [ChatMessage(role: .user, text: text, timestamp: Date(timeIntervalSince1970: 0))]
+        )
+        let data = try JSONCoding.encoder().encode(dto)
+        return try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+    }
+
     // MARK: 퀴즈 (서버 1-based → 도메인 0-based)
 
     func testQuizNextMapping_question() throws {

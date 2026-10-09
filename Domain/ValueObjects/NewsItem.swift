@@ -3,6 +3,9 @@ import Foundation
 /// 뉴스/공시 한 건. (sttak-data.js 종목별 `news[]` 구조와 교차검증)
 /// 식별자가 필요해지면 Entity로 승격(서버 도입 시 결정) — 현재는 VO.
 struct NewsItem: Sendable, Equatable {
+    /// 서버 기사 식별자 — 챗봇 NEWS 맥락의 `newsId`로 전달된다.
+    /// 피드 응답(NewsCardResponse)에 id가 아직 없어 당분간 nil(백엔드 추가 대기).
+    var newsId: Int? = nil
     let sentiment: Sentiment
     let title: String
     let easy: String          // 쉬운 한 줄 요약 (easy)
