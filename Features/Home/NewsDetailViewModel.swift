@@ -56,10 +56,9 @@ final class NewsDetailViewModel {
 
     var isStreaming: Bool { streamingState == .streaming }
 
-    /// 챗봇에 넘기는 맥락. newsId는 서버 뉴스 응답에 id가 없어 아직 nil —
-    /// 백엔드가 NewsCardResponse에 id를 추가하면 여기만 채우면 된다.
+    /// 챗봇에 넘기는 맥락. newsId는 피드 응답에 id가 생기면 자동으로 채워진다(NewsItemDTO.id).
     private var chatContext: ChatContext {
-        .news(stockCode: stockCode, newsId: nil)
+        .news(stockCode: stockCode, newsId: news.newsId)
     }
 
     func toggleTerm(_ index: Int) {

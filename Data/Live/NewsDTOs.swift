@@ -10,6 +10,7 @@ struct NewsFeedDTO: Decodable, Sendable {
 
 /// GET /api/v1/news 응답의 뉴스 한 건(NewsCardResponse, items[] 의 원소).
 struct NewsItemDTO: Decodable, Sendable {
+    let newsId: Int?               // 기사 PK — 챗봇 NEWS 맥락의 newsId로 되보낸다. 같은 기사가 여러 종목 카드에 중복 등장 가능
     let sentiment: String?         // "POSITIVE" | "NEUTRAL" | "NEGATIVE" (미분류 시 null 가능 — 중립 처리)
     let title: String
     let easy: String?
@@ -24,6 +25,7 @@ struct NewsItemDTO: Decodable, Sendable {
 
     func toDomain() -> NewsItem {
         NewsItem(
+            newsId: newsId,
             sentiment: Self.sentiment(from: sentiment ?? ""),
             title: title,
             easy: easy ?? "",
