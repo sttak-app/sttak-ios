@@ -64,8 +64,8 @@ targets:
         UILaunchScreen: {}
         # 백엔드 환경 선택(live|mock). 프리뷰·유닛테스트는 코드에서 자동 Mock.
         STTAK_ENV: live
-        # dev ALB 베이스 URL(HTTP). 코드 기본값과 동일 — 필요 시 여기서 오버라이드.
-        STTAK_API_BASE_URL: "http://sttak-dev-alb-709489725.ap-northeast-2.elb.amazonaws.com"
+        # dev 베이스 URL(HTTPS). 코드 기본값과 동일 — 필요 시 여기서 오버라이드.
+        STTAK_API_BASE_URL: "https://api.dev.sttak.co.kr"
         # 카카오 네이티브 앱 키 — Configs/Secrets.xcconfig 의 빌드 설정에서 주입.
         KAKAO_NATIVE_APP_KEY: "$(KAKAO_NATIVE_APP_KEY)"
         CFBundleURLTypes:
@@ -74,12 +74,6 @@ targets:
         LSApplicationQueriesSchemes:              # 카카오톡 앱 설치 여부 조회
           - kakaokompassauth
           - kakaolink
-        # ⚠️ dev 전용 ATS 예외 — dev ALB가 HTTP뿐이라 허용. 운영(HTTPS) 전환 시 반드시 제거.
-        NSAppTransportSecurity:
-          NSExceptionDomains:
-            sttak-dev-alb-709489725.ap-northeast-2.elb.amazonaws.com:
-              NSExceptionAllowsInsecureHTTPLoads: true
-              NSIncludesSubdomains: false
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations:
